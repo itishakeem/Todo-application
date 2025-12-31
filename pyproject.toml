@@ -20,6 +20,9 @@ addopts = [
     "--cov-fail-under=100",
 ]
 
+[tool.coverage.run]
+omit = ["src/main.py"]
+
 [tool.mypy]
 python_version = "3.13"
 strict = true

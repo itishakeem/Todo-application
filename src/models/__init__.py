@@ -1,5 +1,5 @@
-"""Models package for Todo application."""
+"""Models package for Task application."""
 
-from src.models.todo import Todo
+from src.models.task import Task
 
-__all__ = ["Todo"]
+__all__ = ["Task"]
