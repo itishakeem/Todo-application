@@ -4,8 +4,16 @@ Orchestrates TaskStorage and ConsoleUI to provide interactive menu-driven
 task management.
 """
 
-from src.storage.task_storage import TaskStorage
-from src.ui.console_ui import ConsoleUI
+import sys
+import io
+
+# Force UTF-8 encoding for Windows console
+if sys.platform == "win32":
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+
+from storage.task_storage import TaskStorage
+from ui.console_ui import ConsoleUI
 
 
 def main() -> None:

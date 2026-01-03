@@ -5,7 +5,7 @@ Provides CRUD operations for tasks with dict-based storage.
 
 from datetime import UTC, datetime
 
-from src.models.task import Task
+from models.task import Task
 
 
 class TaskStorage:

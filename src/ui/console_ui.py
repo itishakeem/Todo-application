@@ -4,7 +4,7 @@ Handles all user interaction including menu display, input prompts,
 and formatted output for tasks.
 """
 
-from src.models.task import Task
+from models.task import Task
 
 
 class ConsoleUI:
