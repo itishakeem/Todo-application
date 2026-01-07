@@ -506,9 +506,67 @@ Then merge and continue with remaining stories.
 
 ---
 
+## Phase 11: Post-Implementation Refinements (Completed)
+
+**Purpose**: UX and authentication improvements identified during implementation
+
+**Status**: All tasks completed as part of implementation hardening
+
+### Authentication & Welcome Messages
+
+- [x] T170 [Refinement] Fix welcome message to use stored user name instead of email
+  - **Issue**: Dashboard was falling back to email instead of persisted name
+  - **Fix**: Updated AuthContext to properly store and retrieve `user.name` from both signup and login responses
+  - **Files**: `frontend/lib/context/AuthContext.tsx`, `frontend/app/dashboard/page.tsx`
+  - **Validation**: Verified name appears in welcome message after signup and login
+
+- [x] T171 [Refinement] Ensure "Welcome back" message only shows on returning login
+  - **Issue**: Welcome message needed to differentiate first-time signup from returning login
+  - **Fix**: Implemented `isNewUser` flag in localStorage, set during signup, cleared after 5 seconds
+  - **Files**: `frontend/app/dashboard/page.tsx`, `frontend/lib/context/AuthContext.tsx`
+  - **Validation**: "Welcome, {name}!" shows after signup, "Welcome back, {name}!" shows on login
+
+### Navigation & Authentication UX
+
+- [x] T172 [Refinement] Fix "Start Free" button to redirect authenticated users to dashboard
+  - **Issue**: "Start Free" always redirected to login, even for authenticated users
+  - **Fix**: Added authentication check in landing page, conditional redirect logic
+  - **Files**: `frontend/app/page.tsx`
+  - **Validation**: Authenticated users redirected to `/dashboard`, unauthenticated to `/login`
+
+- [x] T173 [Refinement] Add loading state to "Start Free" button
+  - **Issue**: Button appeared unresponsive during auth check
+  - **Fix**: Added `isLoading` state from `useAuth()`, disabled button during auth loading
+  - **Files**: `frontend/app/page.tsx`
+  - **Validation**: Button disabled while auth context initializes
+
+### Backend Authentication Improvements
+
+- [x] T174 [Refinement] Ensure user name field is stored and returned by signup endpoint
+  - **Issue**: Backend needed to confirm name persistence
+  - **Fix**: Verified User model includes `name` field, signup endpoint stores and returns it
+  - **Files**: `backend/src/api/auth.py`, `backend/src/models/user.py`
+  - **Validation**: API returns `user.name` in both signup and login responses
+
+- [x] T175 [Refinement] Verify login endpoint returns user name from database
+  - **Issue**: Login endpoint needed to return persisted name
+  - **Fix**: Confirmed login query retrieves `user.name` from database and includes in response
+  - **Files**: `backend/src/api/auth.py`
+  - **Validation**: User name persists across sessions, returned correctly on login
+
+### UI/UX Polish
+
+- [x] T176 [Refinement] Add exclamation marks to dashboard welcome messages for consistency
+  - **Issue**: Welcome messages had inconsistent punctuation
+  - **Fix**: Added exclamation marks to all welcome message variants (guest, new user, returning user)
+  - **Files**: `frontend/app/dashboard/page.tsx`
+  - **Validation**: All welcome messages end with "!" for friendly, consistent tone
+
+---
+
 ## Notes
 
-- **Total Tasks**: 169 tasks across 10 phases
+- **Total Tasks**: 176 tasks across 11 phases (7 post-implementation refinements added)
 - **Critical Path**: Phase 1 (Setup) → Phase 2 (Foundational) → Phase 3 (US1 MVP)
 - **Test Strategy**: TDD with Playwright E2E tests (Red-Green-Refactor)
 - **E2E Test Coverage**: 54 scenarios (matches spec.md acceptance criteria exactly)

@@ -5,7 +5,7 @@ Handles connection pooling and session management.
 from sqlmodel import create_engine, Session, SQLModel
 from typing import Generator
 import os
-from dotenv import load_env
+from dotenv import load_dotenv
 
 load_dotenv()
 

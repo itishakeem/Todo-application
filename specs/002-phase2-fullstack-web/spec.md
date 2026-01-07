@@ -262,6 +262,28 @@ As a user, I want task cards to display appropriately on different screen sizes 
 - **Accessibility**: All interactive elements have minimum color contrast ratio of 4.5:1 for normal text (WCAG AA), minimum 44x44px touch targets (WCAG 2.1 Level AA), and visible focus indicators (2px blue outline) when navigating with keyboard
 - **Reliability**: Application handles network errors (timeouts, 500 errors, connection failures) gracefully with user-friendly error messages and retry options, maintaining UI state without data loss, with 0% crash rate during normal operations
 
+## Implementation Clarifications
+
+### Authentication Behavior
+- **User Name Persistence**: During signup, the user's name is collected and stored in the `users.name` field. This name is returned by both signup and login API endpoints and persisted in frontend localStorage.
+- **Welcome Messages**:
+  - After signup: Display "Welcome, {user.name}!" on the dashboard (first visit only)
+  - After login: Display "Welcome back, {user.name}!" on the dashboard (all subsequent visits)
+  - The `isNewUser` flag in localStorage determines which message to show, cleared after 5 seconds
+  - Fallback: If name is not available, display the email username (part before @)
+
+### Guest vs Authenticated Users
+- **Guest Access**: Unauthenticated users can access the dashboard in guest mode
+- **Guest Storage**: Guest tasks are stored in-memory (client-side state) only and will be lost on page refresh or browser close
+- **Authenticated Storage**: Only authenticated users have tasks persisted to Neon DB
+- **Session Persistence**: Authenticated users remain logged in across page refreshes via session cookies
+
+### Navigation Behavior
+- **"Start Free" Button**:
+  - If user is already authenticated: Redirects directly to `/dashboard`
+  - If user is not authenticated: Redirects to `/login` page
+  - This prevents unnecessary login page visits for authenticated users
+
 ## Assumptions
 
 1. **Database Persistence**: Phase 2 adds PostgreSQL database via Neon DB to persist tasks across sessions (addressing Phase 1's in-memory limitation). Data persists indefinitely (no automatic deletion).

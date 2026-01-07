@@ -83,7 +83,7 @@ export default function EditForm({ task, onSave, onCancel }: EditFormProps) {
 
   return (
     <div
-      className="bg-gray-50 rounded-lg p-12 sm:p-16"
+      className="bg-black/40 rounded-lg p-12 sm:p-16"
       data-testid="edit-form"
     >
       <div className="space-y-12">

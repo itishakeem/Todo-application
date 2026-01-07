@@ -2,7 +2,7 @@
 Task API endpoints.
 T039: Implement GET /api/tasks endpoint with filter param
 """
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Header
 from sqlmodel import Session
 from typing import List, Optional
 from uuid import UUID
@@ -50,15 +50,27 @@ class TaskListResponse(BaseModel):
     tasks: List[TaskResponse]
 
 
-# Dependency to get current user (placeholder - will be replaced with real auth)
-async def get_current_user_id() -> UUID:
+# Dependency to get current user ID from header
+async def get_current_user_id(
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id")
+) -> UUID:
     """
-    Get current user ID from session.
-    TODO: Replace with real Better Auth session validation
-    For now, returns a hardcoded UUID for development
+    Get current user ID from X-User-Id header.
+    Phase 2: Simple header-based auth (will be replaced with proper sessions in Phase 3)
     """
-    # This is a placeholder - real implementation will use Better Auth
-    return UUID("12345678-1234-1234-1234-123456789012")
+    if not x_user_id:
+        raise HTTPException(
+            status_code=401,
+            detail="User ID required. Please login first."
+        )
+
+    try:
+        return UUID(x_user_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid user ID format"
+        )
 
 
 # T039: GET /api/tasks endpoint with filter param

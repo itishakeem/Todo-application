@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { ToastProvider } from '@/components/ui';
 import { TaskProvider } from '@/lib/context/TaskContext';
+import { AuthProvider } from '@/lib/context/AuthContext';
 
 export const metadata: Metadata = {
   title: 'Task Management System',
@@ -16,9 +17,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <TaskProvider>
-          <ToastProvider>{children}</ToastProvider>
-        </TaskProvider>
+        <AuthProvider>
+          <TaskProvider>
+            <ToastProvider>{children}</ToastProvider>
+          </TaskProvider>
+        </AuthProvider>
       </body>
     </html>
   );

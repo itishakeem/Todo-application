@@ -6,7 +6,7 @@
 
 import { useMemo } from 'react';
 import { useTaskContext } from '../context/TaskContext';
-import { Task } from '../../components/task/TaskCard';
+import type { Task } from '@/types';
 
 interface UseTasksOptions {
   filter?: 'all' | 'active' | 'completed';

@@ -16,8 +16,8 @@ export class ApiError extends Error {
   }
 }
 
-interface RequestOptions extends RequestInit {
-  body?: any;
+interface RequestOptions extends Omit<RequestInit, 'body'> {
+  body?: Record<string, unknown>;
 }
 
 async function request<T>(
@@ -25,19 +25,41 @@ async function request<T>(
   options: RequestOptions = {}
 ): Promise<T> {
   const url = `${API_URL}${endpoint}`;
+
+  // Get user ID from localStorage for authenticated requests
+  let userId: string | null = null;
+  if (typeof window !== 'undefined') {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        userId = user.id;
+      } catch (e) {
+        // Invalid JSON, ignore
+      }
+    }
+  }
+
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     ...options.headers,
   };
 
+  // Add user ID header if user is logged in
+  if (userId) {
+    headers['X-User-Id'] = userId;
+  }
+
+  const { body, ...restOptions } = options;
+
   const config: RequestInit = {
-    ...options,
+    ...restOptions,
     headers,
     credentials: 'include', // Include cookies for session management
   };
 
-  if (options.body && typeof options.body === 'object') {
-    config.body = JSON.stringify(options.body);
+  if (body) {
+    config.body = JSON.stringify(body);
   }
 
   try {
@@ -69,13 +91,13 @@ export const api = {
   get: <T>(endpoint: string, options?: RequestOptions) =>
     request<T>(endpoint, { ...options, method: 'GET' }),
 
-  post: <T>(endpoint: string, body?: any, options?: RequestOptions) =>
+  post: <T>(endpoint: string, body?: Record<string, unknown>, options?: RequestOptions) =>
     request<T>(endpoint, { ...options, method: 'POST', body }),
 
-  put: <T>(endpoint: string, body?: any, options?: RequestOptions) =>
+  put: <T>(endpoint: string, body?: Record<string, unknown>, options?: RequestOptions) =>
     request<T>(endpoint, { ...options, method: 'PUT', body }),
 
-  patch: <T>(endpoint: string, body?: any, options?: RequestOptions) =>
+  patch: <T>(endpoint: string, body?: Record<string, unknown>, options?: RequestOptions) =>
     request<T>(endpoint, { ...options, method: 'PATCH', body }),
 
   delete: <T>(endpoint: string, options?: RequestOptions) =>

@@ -21,7 +21,7 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
     const baseStyles = `
       min-h-[88px] w-full
       px-12 py-12
-      text-base text-gray-900
+      text-base text-white placeholder-gray-500
       border-2 rounded-xl
       shadow-lg
       backdrop-blur-sm
@@ -29,12 +29,12 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
       resize-y
       focus:outline-none focus:shadow-xl focus:scale-[1.02]
       hover:shadow-xl
-      disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-300/50
+      disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-800/50
     `;
 
     const stateStyles = hasError
-      ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-300 bg-red-100/80'
-      : 'border-white/60 focus:border-white focus:ring-4 focus:ring-white/30 bg-white/80 hover:bg-white/90';
+      ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-300 bg-black/60'
+      : 'border-yellow-500/30 focus:border-yellow-500 focus:ring-4 focus:ring-yellow-400/30 bg-black/60 hover:bg-black/70';
 
     return (
       <div className="w-full">

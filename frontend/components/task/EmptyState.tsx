@@ -37,7 +37,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
           />
         </svg>
       )}
-      <p className="text-lg text-gray-600 text-center font-medium">
+      <p className="text-lg text-gray-300 text-center font-medium">
         {message}
       </p>
     </div>

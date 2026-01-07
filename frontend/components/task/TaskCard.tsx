@@ -171,7 +171,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -10 }}
         transition={{ duration: 0.2 }}
-        className="bg-white/50 backdrop-blur-lg border border-white/60 rounded-2xl shadow-2xl p-12 sm:p-16 lg:p-16"
+        className="bg-black/60 backdrop-blur-lg border border-yellow-500/30 rounded-2xl shadow-2xl p-12 sm:p-16 lg:p-16"
         data-testid="task-card"
       >
         <EditForm task={task} onSave={handleSave} onCancel={handleCancel} />
@@ -184,7 +184,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: 'easeOut' }}
-      className="bg-white/40 backdrop-blur-md border border-white/50 rounded-2xl shadow-xl hover:shadow-2xl hover:bg-white/50 hover:scale-[1.02] transition-all duration-300 p-12 sm:p-16 lg:p-16 group"
+      className="bg-black/60 backdrop-blur-md border border-yellow-500/30 rounded-2xl shadow-xl hover:shadow-2xl hover:border-yellow-500/50 hover:scale-[1.02] transition-all duration-300 p-12 sm:p-16 lg:p-16 group"
       data-testid="task-card"
     >
       <div className="flex items-start gap-8">
@@ -203,7 +203,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
         <div className="flex-1 min-w-0">
           <h3
             className={`text-base lg:text-lg font-semibold mb-1 leading-snug ${
-              isCompleted ? 'line-through text-gray-500' : 'text-gray-900'
+              isCompleted ? 'line-through text-gray-400' : 'text-white'
             }`}
             data-testid="task-title"
           >
@@ -211,7 +211,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
           </h3>
 
           <div
-            className={`text-base text-gray-700 mb-2 leading-relaxed ${
+            className={`text-base text-gray-300 mb-2 leading-relaxed ${
               showExpandButton && !isExpanded ? 'cursor-pointer' : ''
             }`}
             onClick={
@@ -224,7 +224,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
 
           {showExpandButton && (
             <button
-              className="text-sm text-blue-600 hover:text-blue-700 font-medium mb-2"
+              className="text-sm text-yellow-400 hover:text-yellow-300 font-medium mb-2"
               onClick={() => setIsExpanded(!isExpanded)}
             >
               {isExpanded ? 'Show less' : 'Show more'}
@@ -232,7 +232,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
           )}
 
           {/* Timestamps */}
-          <div className="text-sm text-gray-500 space-y-1">
+          <div className="text-sm text-gray-400 space-y-1">
             <div>Created: {formatDate(task.created_at)}</div>
             {task.completed_at && (
               <div>Completed: {formatDateTime(task.completed_at)}</div>
@@ -255,7 +255,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
         {/* Action buttons - right side */}
         <div className="flex flex-col sm:flex-row gap-8">
           <button
-            className="min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-blue-50 text-gray-600 hover:text-blue-600 transition-colors"
+            className="min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center rounded-lg bg-black border border-yellow-500/30 hover:border-yellow-500 text-yellow-400 hover:text-yellow-300 transition-colors"
             onClick={handleEditStart}
             aria-label="Edit task"
             data-testid="edit-button"
@@ -277,7 +277,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
           </button>
 
           <button
-            className="min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center rounded-lg bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-colors"
+            className="min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center rounded-lg bg-black border border-red-500/30 hover:border-red-500 text-red-500 hover:text-red-400 transition-colors"
             onClick={() => onDelete?.(task.id)}
             aria-label="Delete task"
             data-testid="delete-button"

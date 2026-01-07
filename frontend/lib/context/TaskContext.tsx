@@ -1,13 +1,16 @@
 /**
- * TaskContext - In-memory task state management for Phase 2
- * Replaces external API calls with React Context + local state
- * Phase 2 Rule: UI-focused only, no backend dependency
+ * TaskContext - Hybrid task state management for Phase 2
+ * - Authenticated users: Uses FastAPI backend with database persistence
+ * - Guest users: Uses in-memory React state (cleared on refresh)
+ * Phase 2 Complete: Backend integration with guest mode support
  */
 
 'use client';
 
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
 import type { Task } from '@/types';
+import { useAuth } from './AuthContext';
+import { api } from '../api';
 
 interface TaskContextValue {
   // Data
@@ -32,12 +35,20 @@ interface TaskProviderProps {
 }
 
 export function TaskProvider({ children }: TaskProviderProps) {
-  // Initialize with empty array (or optionally add sample tasks for demo)
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [isLoading] = useState(false);
-  const [error] = useState<Error | null>(null);
+  const { isAuthenticated, user, isLoading: authLoading } = useAuth();
 
-  // Helper: Generate UUID locally
+  // In-memory state for guest users
+  const [guestTasks, setGuestTasks] = useState<Task[]>([]);
+
+  // API-backed state for authenticated users
+  const [apiTasks, setApiTasks] = useState<Task[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  // Determine which task list to use
+  const tasks = isAuthenticated ? apiTasks : guestTasks;
+
+  // Helper: Generate UUID locally (for guest mode)
   const generateId = useCallback((): string => {
     return crypto.randomUUID();
   }, []);
@@ -47,109 +58,198 @@ export function TaskProvider({ children }: TaskProviderProps) {
     return new Date().toISOString();
   }, []);
 
-  // Helper: Simulate API delay for realistic UX
+  // Helper: Simulate API delay for realistic UX (guest mode only)
   const simulateDelay = useCallback((): Promise<void> => {
     return new Promise((resolve) => setTimeout(resolve, 50));
+  }, []);
+
+  // Load tasks from API when user logs in
+  useEffect(() => {
+    if (isAuthenticated && user && !authLoading) {
+      loadTasksFromAPI();
+    } else if (!isAuthenticated) {
+      // Clear API tasks when logged out
+      setApiTasks([]);
+    }
+  }, [isAuthenticated, user, authLoading]);
+
+  // Load tasks from backend API
+  const loadTasksFromAPI = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await api.get<{ tasks: Task[] }>('/api/tasks');
+      setApiTasks(response.tasks);
+    } catch (err) {
+      console.error('Failed to load tasks:', err);
+      setError(err instanceof Error ? err : new Error('Failed to load tasks'));
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
   // CREATE: Add new task
   const createTask = useCallback(
     async (title: string, description: string): Promise<Task> => {
-      await simulateDelay();
-
-      const newTask: Task = {
-        id: generateId(),
-        title,
-        description,
-        status: 'pending',
-        created_at: generateTimestamp(),
-        updated_at: null,
-        completed_at: null,
-      };
-
-      setTasks((prev) => [newTask, ...prev]); // Add to beginning (newest first)
-      return newTask;
+      if (isAuthenticated) {
+        // Authenticated: Use API
+        setIsLoading(true);
+        setError(null);
+        try {
+          const newTask = await api.post<Task>('/api/tasks', { title, description });
+          setApiTasks((prev) => [newTask, ...prev]);
+          return newTask;
+        } catch (err) {
+          const error = err instanceof Error ? err : new Error('Failed to create task');
+          setError(error);
+          throw error;
+        } finally {
+          setIsLoading(false);
+        }
+      } else {
+        // Guest: Use in-memory
+        await simulateDelay();
+        const newTask: Task = {
+          id: generateId(),
+          title,
+          description,
+          status: 'pending',
+          created_at: generateTimestamp(),
+          updated_at: null,
+          completed_at: null,
+        };
+        setGuestTasks((prev) => [newTask, ...prev]);
+        return newTask;
+      }
     },
-    [generateId, generateTimestamp, simulateDelay]
+    [isAuthenticated, generateId, generateTimestamp, simulateDelay]
   );
 
   // UPDATE: Modify task title/description
   const updateTask = useCallback(
     async (id: string, title: string, description: string): Promise<Task> => {
-      await simulateDelay();
-
-      let updatedTask: Task | null = null;
-
-      setTasks((prev) =>
-        prev.map((task) => {
-          if (task.id === id) {
-            updatedTask = {
-              ...task,
-              title,
-              description,
-              updated_at: generateTimestamp(),
-            };
-            return updatedTask;
-          }
-          return task;
-        })
-      );
-
-      if (!updatedTask) {
-        throw new Error('Task not found');
+      if (isAuthenticated) {
+        // Authenticated: Use API
+        setIsLoading(true);
+        setError(null);
+        try {
+          const updatedTask = await api.put<Task>(`/api/tasks/${id}`, { title, description });
+          setApiTasks((prev) =>
+            prev.map((task) => (task.id === id ? updatedTask : task))
+          );
+          return updatedTask;
+        } catch (err) {
+          const error = err instanceof Error ? err : new Error('Failed to update task');
+          setError(error);
+          throw error;
+        } finally {
+          setIsLoading(false);
+        }
+      } else {
+        // Guest: Use in-memory
+        await simulateDelay();
+        let updatedTask: Task | null = null;
+        setGuestTasks((prev) =>
+          prev.map((task) => {
+            if (task.id === id) {
+              updatedTask = {
+                ...task,
+                title,
+                description,
+                updated_at: generateTimestamp(),
+              };
+              return updatedTask;
+            }
+            return task;
+          })
+        );
+        if (!updatedTask) {
+          throw new Error('Task not found');
+        }
+        return updatedTask;
       }
-
-      return updatedTask;
     },
-    [generateTimestamp, simulateDelay]
+    [isAuthenticated, generateTimestamp, simulateDelay]
   );
 
   // DELETE: Remove task
   const deleteTask = useCallback(
     async (id: string): Promise<void> => {
-      await simulateDelay();
-
-      setTasks((prev) => {
-        const filtered = prev.filter((task) => task.id !== id);
-        if (filtered.length === prev.length) {
-          throw new Error('Task not found');
+      if (isAuthenticated) {
+        // Authenticated: Use API
+        setIsLoading(true);
+        setError(null);
+        try {
+          await api.delete(`/api/tasks/${id}`);
+          setApiTasks((prev) => prev.filter((task) => task.id !== id));
+        } catch (err) {
+          const error = err instanceof Error ? err : new Error('Failed to delete task');
+          setError(error);
+          throw error;
+        } finally {
+          setIsLoading(false);
         }
-        return filtered;
-      });
+      } else {
+        // Guest: Use in-memory
+        await simulateDelay();
+        setGuestTasks((prev) => {
+          const filtered = prev.filter((task) => task.id !== id);
+          if (filtered.length === prev.length) {
+            throw new Error('Task not found');
+          }
+          return filtered;
+        });
+      }
     },
-    [simulateDelay]
+    [isAuthenticated, simulateDelay]
   );
 
   // TOGGLE: Switch between pending/completed
   const toggleComplete = useCallback(
     async (id: string): Promise<Task> => {
-      await simulateDelay();
-
-      let toggledTask: Task | null = null;
-
-      setTasks((prev) =>
-        prev.map((task) => {
-          if (task.id === id) {
-            const newStatus = task.status === 'completed' ? 'pending' : 'completed';
-            toggledTask = {
-              ...task,
-              status: newStatus,
-              completed_at: newStatus === 'completed' ? generateTimestamp() : null,
-              updated_at: generateTimestamp(),
-            };
-            return toggledTask;
-          }
-          return task;
-        })
-      );
-
-      if (!toggledTask) {
-        throw new Error('Task not found');
+      if (isAuthenticated) {
+        // Authenticated: Use API
+        setIsLoading(true);
+        setError(null);
+        try {
+          const toggledTask = await api.patch<Task>(`/api/tasks/${id}/complete`, {});
+          setApiTasks((prev) =>
+            prev.map((task) => (task.id === id ? toggledTask : task))
+          );
+          return toggledTask;
+        } catch (err) {
+          const error = err instanceof Error ? err : new Error('Failed to toggle task');
+          setError(error);
+          throw error;
+        } finally {
+          setIsLoading(false);
+        }
+      } else {
+        // Guest: Use in-memory
+        await simulateDelay();
+        let toggledTask: Task | null = null;
+        setGuestTasks((prev) =>
+          prev.map((task) => {
+            if (task.id === id) {
+              const newStatus = task.status === 'completed' ? 'pending' : 'completed';
+              toggledTask = {
+                ...task,
+                status: newStatus,
+                completed_at: newStatus === 'completed' ? generateTimestamp() : null,
+                updated_at: generateTimestamp(),
+              };
+              return toggledTask;
+            }
+            return task;
+          })
+        );
+        if (!toggledTask) {
+          throw new Error('Task not found');
+        }
+        return toggledTask;
       }
-
-      return toggledTask;
     },
-    [generateTimestamp, simulateDelay]
+    [isAuthenticated, generateTimestamp, simulateDelay]
   );
 
   // FILTER: Get tasks by status
@@ -171,7 +271,7 @@ export function TaskProvider({ children }: TaskProviderProps) {
 
   const value: TaskContextValue = {
     tasks,
-    isLoading,
+    isLoading: isLoading || authLoading,
     error,
     createTask,
     updateTask,

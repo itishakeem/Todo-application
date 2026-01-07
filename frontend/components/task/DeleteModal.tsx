@@ -61,7 +61,7 @@ export default function DeleteModal({
 
           {/* Modal - T137: 400px desktop, 90% mobile - Glassmorphism */}
           <motion.div
-            className="relative bg-white/70 backdrop-blur-xl rounded-2xl shadow-3xl border border-white/50 w-full max-w-md sm:max-w-[400px] p-6"
+            className="relative bg-black/90 backdrop-blur-xl rounded-2xl shadow-3xl border border-yellow-500/30 w-full max-w-md sm:max-w-[400px] p-6"
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
@@ -70,9 +70,9 @@ export default function DeleteModal({
             onClick={(e) => e.stopPropagation()}
           >
             {/* Icon */}
-            <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 bg-red-100 rounded-full">
+            <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 bg-red-500/20 rounded-full">
               <svg
-                className="w-6 h-6 text-red-600"
+                className="w-6 h-6 text-red-500"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -88,14 +88,14 @@ export default function DeleteModal({
             </div>
 
             {/* Title */}
-            <h2 className="text-xl font-semibold text-gray-900 text-center mb-2">
+            <h2 className="text-xl font-semibold text-white text-center mb-2">
               Delete Task
             </h2>
 
             {/* Message */}
-            <p className="text-gray-600 text-center mb-4">
+            <p className="text-gray-300 text-center mb-4">
               Are you sure you want to delete{' '}
-              <span className="font-semibold">"{taskTitle}"</span>? This action
+              <span className="font-semibold text-white">"{taskTitle}"</span>? This action
               cannot be undone.
             </p>
 

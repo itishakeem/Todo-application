@@ -1,140 +1,445 @@
 /**
- * Dashboard Page - Main application view
- * T045: Create Dashboard page layout
- * T132: Modal state management
- * Spec: User Story 1 - View Todo Dashboard
- * Spec: User Story 5 - Task deletion with modal
+ * Landing Page - Professional Home Page for Todo Application
+ * Polished, premium design with calm animations
+ * Focus on clarity, simplicity, and professionalism
  */
 
 'use client';
 
-import React, { useState } from 'react';
-import TaskList from '../components/task/TaskList';
-import TaskListErrorBoundary from '../components/task/TaskListErrorBoundary';
-import TaskForm from '../components/task/TaskForm';
-import DeleteModal from '../components/task/DeleteModal';
-import FilterTabs from '../components/task/FilterTabs';
-import { useToast } from '../components/ui/Toast';
-import { useTaskContext } from '../lib/context/TaskContext';
-import useTasks from '../lib/hooks/useTasks';
-import type { Task } from '../types';
+import React from 'react';
+import { motion } from 'framer-motion';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import Button from '../components/ui/Button';
+import { useAuth } from '@/lib/context/AuthContext';
 
-export default function Home() {
-  const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all');
-  const { tasks, isLoading, isError, error, mutate } = useTasks({ filter });
+export default function LandingPage() {
+  const router = useRouter();
+  const { isAuthenticated, isLoading } = useAuth();
 
-  // T132: Modal state management
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const { showToast } = useToast();
-  const { deleteTask } = useTaskContext();
-
-  const handleComplete = (taskId: string) => {
-    // Trigger SWR revalidation after completion
-    mutate();
-  };
-
-  const handleEdit = (taskId: string) => {
-    // Trigger SWR revalidation after edit
-    mutate();
-  };
-
-  const handleDelete = (taskId: string) => {
-    // Find the task to show in modal
-    const task = tasks.find((t) => t.id === taskId);
-    if (task) {
-      setTaskToDelete(task);
-      setDeleteModalOpen(true);
+  const handleStartFree = () => {
+    if (isAuthenticated) {
+      router.push('/dashboard');
+    } else {
+      router.push('/login');
     }
   };
-
-  const handleDeleteConfirm = async () => {
-    if (!taskToDelete) return;
-
-    setIsDeleting(true);
-
-    try {
-      // Phase 2: Use TaskContext instead of API call
-      await deleteTask(taskToDelete.id);
-
-      // Success - revalidate and show toast
-      mutate();
-      showToast('success', 'Task deleted successfully');
-      setDeleteModalOpen(false);
-      setTaskToDelete(null);
-    } catch (error) {
-      showToast(
-        'error',
-        error instanceof Error ? error.message : 'Failed to delete task'
-      );
-    } finally {
-      setIsDeleting(false);
-    }
+  // Calm, professional animation variants
+  const fadeInSubtle = {
+    initial: { opacity: 0, y: 12 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] },
   };
 
-  const handleDeleteCancel = () => {
-    setDeleteModalOpen(false);
-    setTaskToDelete(null);
-  };
-
-  const handleRetry = () => {
-    mutate();
-  };
-
-  const handleTaskCreated = (_newTask: Task) => {
-    // Optimistic update - mutate triggers SWR to revalidation
-    mutate();
+  const staggerChildren = {
+    animate: {
+      transition: {
+        staggerChildren: 0.08,
+      },
+    },
   };
 
   return (
-    <main className="min-h-screen">
-      {/* Header - Glassmorphism */}
-      <header className="bg-white/20 backdrop-blur-xl border-b border-white/30 shadow-2xl sticky top-0 z-10">
-        <div className="max-w-screen-lg mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <h1 className="text-2xl sm:text-3xl font-bold text-white drop-shadow-lg">
-            ✨ Todo Dashboard
-          </h1>
-        </div>
-      </header>
+    <div className="min-h-screen bg-black" style={{ background: '#0B0B0B' }}>
+      {/* Simple Top Bar */}
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-5 border-b border-yellow-500/20 bg-black/80 backdrop-blur-sm">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          {/* Product Name */}
+          <Link href="/" className="flex items-center space-x-2 group">
+            <span className="text-xl transition-transform group-hover:scale-110 duration-200">⚡</span>
+            <span className="text-lg font-bold text-yellow-400">TaskFlow</span>
+          </Link>
 
-      {/* Main Content */}
-      <div className="max-w-screen-lg mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        {/* Task Form - User Story 2 (EXEC-UI-04) */}
-        <div className="mb-6">
-          <TaskForm onTaskCreated={handleTaskCreated} />
+          {/* Navigation Buttons */}
+          <div className="flex items-center space-x-8">
+            <Link
+              href="/"
+              className="relative text-sm text-white transition-colors duration-200 group"
+            >
+              Home
+              <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-yellow-400"></span>
+            </Link>
+            <Link
+              href="/about"
+              className="relative text-sm text-gray-400 hover:text-yellow-400 transition-colors duration-200 group"
+            >
+              About Us
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-yellow-400 group-hover:w-full transition-all duration-300"></span>
+            </Link>
+            <Link
+              href="/contact"
+              className="relative text-sm text-gray-400 hover:text-yellow-400 transition-colors duration-200 group"
+            >
+              Contact Us
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-yellow-400 group-hover:w-full transition-all duration-300"></span>
+            </Link>
+          </div>
         </div>
-
-        {/* Filter Tabs - T145-T150 */}
-        <div className="mb-6">
-          <FilterTabs
-            currentFilter={filter}
-            onFilterChange={setFilter}
-          />
-        </div>
-
-        {/* Task List */}
-        <TaskListErrorBoundary>
-          <TaskList
-            tasks={tasks}
-            isLoading={isLoading}
-            error={isError ? error : null}
-            onComplete={handleComplete}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onRetry={handleRetry}
-          />
-        </TaskListErrorBoundary>
       </div>
 
-      {/* Delete Modal - T131-T137 */}
-      <DeleteModal
-        isOpen={deleteModalOpen}
-        taskTitle={taskToDelete?.title || ''}
-        isDeleting={isDeleting}
-        onConfirm={handleDeleteConfirm}
-        onCancel={handleDeleteCancel}
-      />
-    </main>
+      {/* Hero Section */}
+      <section className="pt-8 sm:pt-12 pb-16 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-5xl mx-auto">
+          <motion.div
+            initial="initial"
+            animate="animate"
+            variants={staggerChildren}
+            className="text-center"
+          >
+            {/* Main Heading */}
+            <motion.h1
+              variants={fadeInSubtle}
+              className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4 leading-tight tracking-tight"
+            >
+              Organize Your Life,
+              <br />
+              <span className="text-yellow-400">
+                One Task at a Time
+              </span>
+            </motion.h1>
+
+            {/* Subtitle */}
+            <motion.p
+              variants={fadeInSubtle}
+              className="text-lg sm:text-xl text-gray-400 mb-8 max-w-2xl mx-auto leading-relaxed"
+            >
+              A beautiful, intuitive todo application designed to help you stay productive
+              and focused on what matters most.
+            </motion.p>
+
+            {/* CTA Buttons */}
+            <motion.div
+              variants={fadeInSubtle}
+              className="flex flex-col sm:flex-row gap-3 justify-center items-center"
+            >
+              <Button
+                variant="primary"
+                onClick={handleStartFree}
+                disabled={isLoading}
+                className="text-base px-8 py-3 hover:shadow-[0_0_30px_rgba(234,179,8,0.3)] hover:scale-105 transition-all duration-300"
+              >
+                Start Free
+              </Button>
+              <Link href="/dashboard">
+                <Button
+                  variant="secondary"
+                  className="text-base px-8 py-3 hover:bg-yellow-500/10 hover:border-yellow-500/50 transition-all duration-300"
+                >
+                  View Dashboard
+                </Button>
+              </Link>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section id="features" className="py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-80px' }}
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            className="text-center mb-14"
+          >
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-3">
+              Everything You Need
+            </h2>
+            <p className="text-lg text-gray-400 max-w-2xl mx-auto">
+              Powerful features designed with simplicity in mind
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Feature 1 */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: 0.05 }}
+              className="bg-black border border-yellow-500/30 rounded-lg p-6 hover:border-yellow-500/50 hover:shadow-lg hover:shadow-yellow-500/10 transition-all duration-300"
+            >
+              <div className="text-3xl mb-3 opacity-90">🎯</div>
+              <h3 className="text-xl font-semibold text-white mb-2">
+                Simple & Intuitive
+              </h3>
+              <p className="text-gray-400 leading-relaxed text-sm">
+                Clean interface that lets you focus on your tasks without distractions
+              </p>
+            </motion.div>
+
+            {/* Feature 2 */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: 0.1 }}
+              className="bg-black border border-yellow-500/30 rounded-lg p-6 hover:border-yellow-500/50 hover:shadow-lg hover:shadow-yellow-500/10 transition-all duration-300"
+            >
+              <div className="text-3xl mb-3 opacity-90">⚡</div>
+              <h3 className="text-xl font-semibold text-white mb-2">
+                Lightning Fast
+              </h3>
+              <p className="text-gray-400 leading-relaxed text-sm">
+                Built with Next.js for instant page loads and smooth interactions
+              </p>
+            </motion.div>
+
+            {/* Feature 3 */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: 0.15 }}
+              className="bg-black border border-yellow-500/30 rounded-lg p-6 hover:border-yellow-500/50 hover:shadow-lg hover:shadow-yellow-500/10 transition-all duration-300"
+            >
+              <div className="text-3xl mb-3 opacity-90">📱</div>
+              <h3 className="text-xl font-semibold text-white mb-2">
+                Fully Responsive
+              </h3>
+              <p className="text-gray-400 leading-relaxed text-sm">
+                Works seamlessly across desktop, tablet, and mobile devices
+              </p>
+            </motion.div>
+
+            {/* Feature 4 */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: 0.2 }}
+              className="bg-black border border-yellow-500/30 rounded-lg p-6 hover:border-yellow-500/50 hover:shadow-lg hover:shadow-yellow-500/10 transition-all duration-300"
+            >
+              <div className="text-3xl mb-3 opacity-90">✨</div>
+              <h3 className="text-xl font-semibold text-white mb-2">
+                Beautiful Design
+              </h3>
+              <p className="text-gray-400 leading-relaxed text-sm">
+                Modern glassmorphism UI with smooth animations and transitions
+              </p>
+            </motion.div>
+
+            {/* Feature 5 */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: 0.25 }}
+              className="bg-black border border-yellow-500/30 rounded-lg p-6 hover:border-yellow-500/50 hover:shadow-lg hover:shadow-yellow-500/10 transition-all duration-300"
+            >
+              <div className="text-3xl mb-3 opacity-90">🔄</div>
+              <h3 className="text-xl font-semibold text-white mb-2">
+                Real-time Updates
+              </h3>
+              <p className="text-gray-400 leading-relaxed text-sm">
+                Instant feedback and synchronization for all your task operations
+              </p>
+            </motion.div>
+
+            {/* Feature 6 */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: 0.3 }}
+              className="bg-black border border-yellow-500/30 rounded-lg p-6 hover:border-yellow-500/50 hover:shadow-lg hover:shadow-yellow-500/10 transition-all duration-300"
+            >
+              <div className="text-3xl mb-3 opacity-90">🤖</div>
+              <h3 className="text-xl font-semibold text-white mb-2">
+                AI Assistant (Soon)
+              </h3>
+              <p className="text-gray-400 leading-relaxed text-sm">
+                Intelligent chatbot to help manage your tasks via natural language
+              </p>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Analytics/Stats Section */}
+      <section id="stats" className="py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.4 }}
+            className="bg-black border border-yellow-500/30 rounded-xl p-10 sm:p-12 hover:border-yellow-500/40 transition-colors duration-300"
+          >
+            <div className="text-center mb-10">
+              <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">
+                Trusted by Thousands
+              </h2>
+              <p className="text-base text-gray-400">
+                Join productive people who organize their lives with TaskFlow
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              <motion.div
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.3, delay: 0.05 }}
+                className="text-center p-5 rounded-lg bg-black border border-yellow-500/20 hover:border-yellow-500/40 transition-colors duration-300"
+              >
+                <div className="text-4xl font-bold text-yellow-400 mb-1">12,000+</div>
+                <div className="text-sm text-gray-400">Active Users</div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.3, delay: 0.1 }}
+                className="text-center p-5 rounded-lg bg-black border border-yellow-500/20 hover:border-yellow-500/40 transition-colors duration-300"
+              >
+                <div className="text-4xl font-bold text-yellow-400 mb-1">1.2M+</div>
+                <div className="text-sm text-gray-400">Tasks Completed</div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.3, delay: 0.15 }}
+                className="text-center p-5 rounded-lg bg-black border border-yellow-500/20 hover:border-yellow-500/40 transition-colors duration-300"
+              >
+                <div className="text-4xl font-bold text-yellow-400 mb-1">99.9%</div>
+                <div className="text-sm text-gray-400">Uptime</div>
+              </motion.div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Final CTA Section */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.4 }}
+          className="max-w-3xl mx-auto text-center"
+        >
+          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+            Ready to Get Organized?
+          </h2>
+          <p className="text-lg text-gray-400 mb-8 leading-relaxed">
+            Start managing your tasks effectively today. No credit card required.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+            <Button
+              variant="primary"
+              onClick={handleStartFree}
+              disabled={isLoading}
+              className="text-lg px-10 py-3 hover:shadow-[0_0_35px_rgba(234,179,8,0.35)] hover:scale-105 transition-all duration-300"
+            >
+              Start Free
+            </Button>
+            <Link href="/dashboard">
+              <Button
+                variant="secondary"
+                className="text-lg px-10 py-3 hover:bg-yellow-500/10 hover:border-yellow-500/50 transition-all duration-300"
+              >
+                View Dashboard
+              </Button>
+            </Link>
+          </div>
+        </motion.div>
+      </section>
+
+      {/* Footer */}
+      <footer id="footer" className="border-t border-yellow-500/20 py-10 px-4 sm:px-6 lg:px-8 mt-12">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
+            {/* Brand */}
+            <div className="col-span-1 sm:col-span-2 lg:col-span-1">
+              <div className="flex items-center space-x-2 mb-3">
+                <span className="text-2xl">⚡</span>
+                <span className="text-xl font-bold text-yellow-400">TaskFlow</span>
+              </div>
+              <p className="text-gray-400 leading-relaxed text-sm">
+                Simple, beautiful task management for everyone.
+              </p>
+            </div>
+
+            {/* Product */}
+            <div>
+              <h3 className="text-base font-semibold text-white mb-3">Product</h3>
+              <ul className="space-y-2">
+                <li>
+                  <Link href="/dashboard" className="text-gray-400 hover:text-yellow-400 transition-colors text-sm">
+                    Dashboard
+                  </Link>
+                </li>
+                <li>
+                  <a href="#features" className="text-gray-400 hover:text-yellow-400 transition-colors text-sm">
+                    Features
+                  </a>
+                </li>
+                <li>
+                  <a href="#stats" className="text-gray-400 hover:text-yellow-400 transition-colors text-sm">
+                    About
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            {/* Company */}
+            <div>
+              <h3 className="text-base font-semibold text-white mb-3">Company</h3>
+              <ul className="space-y-2">
+                <li>
+                  <a href="#" className="text-gray-400 hover:text-yellow-400 transition-colors text-sm">
+                    About Us
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-gray-400 hover:text-yellow-400 transition-colors text-sm">
+                    Contact
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-gray-400 hover:text-yellow-400 transition-colors text-sm">
+                    Privacy
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            {/* Connect */}
+            <div>
+              <h3 className="text-base font-semibold text-white mb-3">Connect</h3>
+              <ul className="space-y-2">
+                <li>
+                  <a href="#" className="text-gray-400 hover:text-yellow-400 transition-colors text-sm">
+                    Twitter
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-gray-400 hover:text-yellow-400 transition-colors text-sm">
+                    GitHub
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-gray-400 hover:text-yellow-400 transition-colors text-sm">
+                    Discord
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Copyright */}
+          <div className="border-t border-yellow-500/20 pt-6 text-center">
+            <p className="text-gray-500 text-sm">
+              © 2026 TaskFlow. All rights reserved. Built with Next.js and Claude Code.
+            </p>
+          </div>
+        </div>
+      </footer>
+    </div>
   );
 }

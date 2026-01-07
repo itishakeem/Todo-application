@@ -16,6 +16,7 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 class SignupRequest(BaseModel):
     email: EmailStr
     password: str
+    name: str | None = None
 
 
 class LoginRequest(BaseModel):
@@ -46,14 +47,14 @@ async def signup(request: SignupRequest, session: Session = Depends(get_session)
     password_hash = bcrypt.hashpw(request.password.encode(), bcrypt.gensalt()).decode()
 
     # Create new user
-    user = User(email=request.email, password_hash=password_hash)
+    user = User(email=request.email, name=request.name, password_hash=password_hash)
     session.add(user)
     session.commit()
     session.refresh(user)
 
     return AuthResponse(
-        user={"id": str(user.id), "email": user.email},
-        message="User created successfully",
+        user={"id": str(user.id), "email": user.email, "name": user.name},
+        message="Welcome! Your account has been created successfully",
     )
 
 
@@ -68,19 +69,19 @@ async def login(request: LoginRequest, session: Session = Depends(get_session)):
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials",
+            detail="Invalid email or password",
         )
 
     # Verify password
     if not bcrypt.checkpw(request.password.encode(), user.password_hash.encode()):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials",
+            detail="Invalid email or password",
         )
 
     return AuthResponse(
-        user={"id": str(user.id), "email": user.email},
-        message="Login successful",
+        user={"id": str(user.id), "email": user.email, "name": user.name},
+        message="Welcome back! Login successful",
     )
 
 

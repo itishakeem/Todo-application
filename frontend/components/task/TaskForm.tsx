@@ -92,7 +92,7 @@ export default function TaskForm({ onTaskCreated }: TaskFormProps) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-white/40 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/50 p-4 sm:p-6 hover:shadow-3xl hover:bg-white/50 transition-all duration-300"
+      className="bg-black/60 backdrop-blur-lg rounded-2xl shadow-2xl border border-yellow-500/30 p-4 sm:p-6 hover:shadow-3xl hover:border-yellow-500/50 transition-all duration-300"
       data-testid="task-form"
     >
       <h2 className="text-xl font-semibold text-white drop-shadow-md mb-4">
