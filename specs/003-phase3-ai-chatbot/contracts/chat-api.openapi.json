@@ -1,0 +1,429 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Todo Chatbot API - Phase III",
+    "description": "AI-powered Todo chatbot API for natural language task management",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Phase III AI Chatbot"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8000",
+      "description": "Local development server"
+    }
+  ],
+  "security": [
+    {
+      "userIdHeader": []
+    }
+  ],
+  "paths": {
+    "/api/chat": {
+      "post": {
+        "summary": "Send chat message",
+        "description": "Send a natural language message to the AI assistant. Creates a new conversation if conversation_id is not provided.",
+        "operationId": "sendChatMessage",
+        "tags": ["chat"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatRequest"
+              },
+              "examples": {
+                "new_conversation": {
+                  "summary": "Start new conversation",
+                  "value": {
+                    "message": "Add a task to buy groceries"
+                  }
+                },
+                "continue_conversation": {
+                  "summary": "Continue existing conversation",
+                  "value": {
+                    "conversation_id": 1,
+                    "message": "Show me my tasks"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response from AI assistant",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Conversation not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/chat/conversations": {
+      "get": {
+        "summary": "List conversations",
+        "description": "Get list of user's conversations ordered by most recently updated",
+        "operationId": "listConversations",
+        "tags": ["conversations"],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of conversations to return",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Number of conversations to skip for pagination",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of conversations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/chat/conversations/{conversation_id}/messages": {
+      "get": {
+        "summary": "Get conversation messages",
+        "description": "Get messages for a specific conversation with pagination support",
+        "operationId": "getConversationMessages",
+        "tags": ["conversations"],
+        "parameters": [
+          {
+            "name": "conversation_id",
+            "in": "path",
+            "description": "ID of the conversation",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of messages to return",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Number of messages to skip for pagination",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of messages",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Conversation not found or not owned by user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "userIdHeader": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-User-Id",
+        "description": "User UUID for authentication"
+      }
+    },
+    "schemas": {
+      "ChatRequest": {
+        "type": "object",
+        "required": ["message"],
+        "properties": {
+          "conversation_id": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Optional existing conversation ID. If not provided, creates new conversation."
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000,
+            "description": "User message to send to the AI assistant"
+          }
+        }
+      },
+      "ChatResponse": {
+        "type": "object",
+        "required": ["conversation_id", "response", "tool_calls"],
+        "properties": {
+          "conversation_id": {
+            "type": "integer",
+            "description": "ID of the conversation (new or existing)"
+          },
+          "response": {
+            "type": "string",
+            "description": "AI assistant's text response"
+          },
+          "tool_calls": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ToolCallInfo"
+            },
+            "description": "List of tools called by the AI assistant"
+          }
+        }
+      },
+      "ToolCallInfo": {
+        "type": "object",
+        "required": ["tool", "input", "output"],
+        "properties": {
+          "tool": {
+            "type": "string",
+            "description": "Name of the tool that was called"
+          },
+          "input": {
+            "type": "object",
+            "description": "Input parameters passed to the tool"
+          },
+          "output": {
+            "description": "Output returned by the tool"
+          }
+        }
+      },
+      "ConversationSummary": {
+        "type": "object",
+        "required": ["id", "message_count", "last_message_preview"],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Conversation ID"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the conversation was created"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the conversation was last updated"
+          },
+          "message_count": {
+            "type": "integer",
+            "description": "Total number of messages in the conversation"
+          },
+          "last_message_preview": {
+            "type": "string",
+            "description": "Preview of the last message (up to 100 characters)"
+          }
+        }
+      },
+      "ConversationListResponse": {
+        "type": "object",
+        "required": ["conversations", "total"],
+        "properties": {
+          "conversations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConversationSummary"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "description": "Total number of conversations for this user"
+          }
+        }
+      },
+      "MessageResponse": {
+        "type": "object",
+        "required": ["id", "role", "content"],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Message ID"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["user", "assistant"],
+            "description": "Who sent the message"
+          },
+          "content": {
+            "type": "string",
+            "description": "Message content"
+          },
+          "tool_calls": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "nullable": true,
+            "description": "Tool calls made by assistant (for assistant messages)"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the message was created"
+          }
+        }
+      },
+      "MessageListResponse": {
+        "type": "object",
+        "required": ["messages", "total", "has_more"],
+        "properties": {
+          "messages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MessageResponse"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "description": "Total number of messages in conversation"
+          },
+          "has_more": {
+            "type": "boolean",
+            "description": "Whether there are more messages beyond this page"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": ["detail"],
+        "properties": {
+          "detail": {
+            "type": "string",
+            "description": "Error message"
+          },
+          "code": {
+            "type": "string",
+            "nullable": true,
+            "description": "Error code for programmatic handling"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "chat",
+      "description": "Chat endpoints for AI-powered task management"
+    },
+    {
+      "name": "conversations",
+      "description": "Conversation and message history management"
+    }
+  ]
+}
