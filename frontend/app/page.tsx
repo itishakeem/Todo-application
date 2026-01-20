@@ -2,6 +2,7 @@
  * Landing Page - Professional Home Page for Todo Application
  * Polished, premium design with calm animations
  * Focus on clarity, simplicity, and professionalism
+ * Phase 3: Integrated with AI Chatbot via shared Navbar
  */
 
 'use client';
@@ -12,6 +13,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Button from '../components/ui/Button';
 import { useAuth } from '@/lib/context/AuthContext';
+import { Navbar } from '@/components/layout';
 
 export default function LandingPage() {
   const router = useRouter();
@@ -41,41 +43,8 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-black" style={{ background: '#0B0B0B' }}>
-      {/* Simple Top Bar */}
-      <div className="w-full px-4 sm:px-6 lg:px-8 py-5 border-b border-yellow-500/20 bg-black/80 backdrop-blur-sm">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          {/* Product Name */}
-          <Link href="/" className="flex items-center space-x-2 group">
-            <span className="text-xl transition-transform group-hover:scale-110 duration-200">⚡</span>
-            <span className="text-lg font-bold text-yellow-400">TaskFlow</span>
-          </Link>
-
-          {/* Navigation Buttons */}
-          <div className="flex items-center space-x-8">
-            <Link
-              href="/"
-              className="relative text-sm text-white transition-colors duration-200 group"
-            >
-              Home
-              <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-yellow-400"></span>
-            </Link>
-            <Link
-              href="/about"
-              className="relative text-sm text-gray-400 hover:text-yellow-400 transition-colors duration-200 group"
-            >
-              About Us
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-yellow-400 group-hover:w-full transition-all duration-300"></span>
-            </Link>
-            <Link
-              href="/contact"
-              className="relative text-sm text-gray-400 hover:text-yellow-400 transition-colors duration-200 group"
-            >
-              Contact Us
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-yellow-400 group-hover:w-full transition-all duration-300"></span>
-            </Link>
-          </div>
-        </div>
-      </div>
+      {/* Shared Navbar with AI Chat button */}
+      <Navbar />
 
       {/* Hero Section */}
       <section className="pt-8 sm:pt-12 pb-16 px-4 sm:px-6 lg:px-8">
@@ -243,11 +212,12 @@ export default function LandingPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: 0.3 }}
-              className="bg-black border border-yellow-500/30 rounded-lg p-6 hover:border-yellow-500/50 hover:shadow-lg hover:shadow-yellow-500/10 transition-all duration-300"
+              className="bg-black border border-yellow-500/30 rounded-lg p-6 hover:border-yellow-500/50 hover:shadow-lg hover:shadow-yellow-500/10 transition-all duration-300 relative overflow-hidden"
             >
+              <div className="absolute top-2 right-2 px-2 py-0.5 bg-yellow-500 text-black text-xs font-bold rounded-full">NEW</div>
               <div className="text-3xl mb-3 opacity-90">🤖</div>
               <h3 className="text-xl font-semibold text-white mb-2">
-                AI Assistant (Soon)
+                AI Assistant
               </h3>
               <p className="text-gray-400 leading-relaxed text-sm">
                 Intelligent chatbot to help manage your tasks via natural language

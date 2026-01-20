@@ -2,6 +2,7 @@
  * Signup Page
  * Professional registration page using Better Auth
  * Clean, centered layout with smooth animations
+ * Phase 3: Integrated with shared Navbar
  */
 
 'use client';
@@ -11,6 +12,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/context/AuthContext';
+import { Navbar } from '@/components/layout';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -48,9 +50,9 @@ export default function SignupPage() {
     try {
       await signup(formData.email, formData.password, formData.name);
       router.push('/dashboard');
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Extract the error message from the API error
-      const errorMessage = error?.message || 'Signup failed. Please try again.';
+      const errorMessage = error instanceof Error ? error.message : 'Signup failed. Please try again.';
       alert(errorMessage);
       console.error('Signup error:', error);
     } finally {
@@ -75,39 +77,8 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen bg-black flex flex-col" style={{ background: '#0B0B0B' }}>
-      {/* Simple Top Bar */}
-      <div className="w-full px-4 sm:px-6 lg:px-8 py-5 border-b border-yellow-500/20 bg-black/80 backdrop-blur-sm">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <Link href="/" className="flex items-center space-x-2 group">
-            <span className="text-xl transition-transform group-hover:scale-110 duration-200">⚡</span>
-            <span className="text-lg font-bold text-yellow-400">TaskFlow</span>
-          </Link>
-
-          <div className="flex items-center space-x-8">
-            <Link
-              href="/"
-              className="relative text-sm text-gray-400 hover:text-yellow-400 transition-colors duration-200 group"
-            >
-              Home
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-yellow-400 group-hover:w-full transition-all duration-300"></span>
-            </Link>
-            <Link
-              href="/about"
-              className="relative text-sm text-gray-400 hover:text-yellow-400 transition-colors duration-200 group"
-            >
-              About Us
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-yellow-400 group-hover:w-full transition-all duration-300"></span>
-            </Link>
-            <Link
-              href="/contact"
-              className="relative text-sm text-gray-400 hover:text-yellow-400 transition-colors duration-200 group"
-            >
-              Contact Us
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-yellow-400 group-hover:w-full transition-all duration-300"></span>
-            </Link>
-          </div>
-        </div>
-      </div>
+      {/* Shared Navbar */}
+      <Navbar />
 
       {/* Main Content - Centered */}
       <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12">

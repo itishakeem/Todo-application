@@ -2,12 +2,12 @@
  * Dashboard Page - Black & Yellow Theme
  * Enhanced with lightweight animations and premium feel
  * Phase 2: Database-backed for authenticated users, in-memory for guests
+ * Phase 3: Integrated with AI Chatbot via shared Navbar
  */
 
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import Link from 'next/link';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import TaskList from '@/components/task/TaskList';
@@ -19,11 +19,12 @@ import { useToast } from '@/components/ui/Toast';
 import { useTaskContext } from '@/lib/context/TaskContext';
 import { useAuth } from '@/lib/context/AuthContext';
 import useTasks from '@/lib/hooks/useTasks';
+import { Navbar, TaskChatBridge } from '@/components/layout';
 import type { Task } from '@/types';
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { isAuthenticated, user, logout } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all');
   const { tasks, isLoading, isError, error, mutate } = useTasks({ filter });
   const [isNewUser, setIsNewUser] = useState(false);
@@ -34,6 +35,11 @@ export default function DashboardPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const { showToast } = useToast();
   const { deleteTask } = useTaskContext();
+
+  // Task refresh callback for chat integration
+  const handleTasksChanged = useCallback(() => {
+    mutate();
+  }, [mutate]);
 
   // Check if user is new (just signed up)
   React.useEffect(() => {
@@ -58,8 +64,7 @@ export default function DashboardPage() {
     };
   }, [tasks]);
 
-  const handleLogout = async () => {
-    await logout();
+  const handleLogout = () => {
     router.push('/');
   };
 
@@ -115,60 +120,11 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-[#0B0B0B] flex flex-col">
-      {/* Top Bar - Black with Yellow accents */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="w-full px-4 sm:px-6 lg:px-8 py-5 border-b border-yellow-500/20 bg-black/80 backdrop-blur-sm"
-      >
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <Link href="/" className="flex items-center space-x-2 group">
-            <motion.span
-              whileHover={{ rotate: 10, scale: 1.1 }}
-              transition={{ type: "spring", stiffness: 400 }}
-              className="text-xl"
-            >
-              ⚡
-            </motion.span>
-            <span className="text-lg font-bold text-yellow-400">TaskFlow</span>
-          </Link>
+      {/* Task-Chat Bridge for real-time sync */}
+      <TaskChatBridge onTasksChanged={handleTasksChanged} />
 
-          <div className="flex items-center space-x-6">
-            <Link
-              href="/"
-              className="relative text-sm text-gray-400 hover:text-yellow-400 transition-colors duration-200 group"
-            >
-              Home
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-yellow-400 group-hover:w-full transition-all duration-300"></span>
-            </Link>
-            <Link
-              href="/about"
-              className="relative text-sm text-gray-400 hover:text-yellow-400 transition-colors duration-200 group"
-            >
-              About
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-yellow-400 group-hover:w-full transition-all duration-300"></span>
-            </Link>
-            <Link
-              href="/contact"
-              className="relative text-sm text-gray-400 hover:text-yellow-400 transition-colors duration-200 group"
-            >
-              Contact
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-yellow-400 group-hover:w-full transition-all duration-300"></span>
-            </Link>
-            {isAuthenticated && (
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handleLogout}
-                className="text-sm px-4 py-2 rounded-md bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20 border border-yellow-500/30 transition-all duration-200"
-              >
-                Logout
-              </motion.button>
-            )}
-          </div>
-        </div>
-      </motion.div>
+      {/* Shared Navbar with AI Chat button */}
+      <Navbar onLogout={handleLogout} showDashboardLink={false} />
 
       {/* Main Content */}
       <main className="flex-1">
