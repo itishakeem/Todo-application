@@ -1,0 +1,136 @@
+# Kubernetes Deployment for Todo Backend (FastAPI)
+# Phase IV - Tasks T032, T033, T034
+#
+# Features:
+# - 2 replicas for high availability
+# - RollingUpdate strategy for zero-downtime deployments
+# - Resource limits for cluster stability
+# - Security context (runAsNonRoot)
+# - Secrets injection via secretKeyRef
+# - ConfigMap for non-sensitive environment variables
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-deployment
+  labels:
+    app: todo-app
+    component: backend
+    phase: "4"
+spec:
+  # T032: 2 replicas for high availability
+  replicas: 2
+
+  # T033: RollingUpdate strategy
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+
+  selector:
+    matchLabels:
+      app: todo-app
+      component: backend
+
+  template:
+    metadata:
+      labels:
+        app: todo-app
+        component: backend
+    spec:
+      # T034: Security context - run as non-root
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+
+      containers:
+        - name: backend
+          image: todo-backend:latest
+          imagePullPolicy: IfNotPresent
+
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+
+          # Environment variables from ConfigMap
+          envFrom:
+            - configMapRef:
+                name: todo-config
+
+          # Sensitive environment variables from Secrets (T029 - secretKeyRef)
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: todo-secrets
+                  key: database-url
+
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: todo-secrets
+                  key: openai-api-key
+
+            - name: BETTER_AUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: todo-secrets
+                  key: better-auth-secret
+
+          # Resource limits
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+          # T038: Liveness probe - checks if container is running
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          # T039: Readiness probe - checks if container is ready to receive traffic
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            successThreshold: 1
+            failureThreshold: 3
+
+          # T040: Startup probe - gives container time to start up
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 30
+
+          # Container security context
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop:
+                - ALL
+
+      # Graceful termination
+      terminationGracePeriodSeconds: 30
+
+      # Restart policy
+      restartPolicy: Always

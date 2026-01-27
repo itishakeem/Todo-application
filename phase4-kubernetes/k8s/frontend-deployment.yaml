@@ -1,0 +1,115 @@
+# Kubernetes Deployment for Todo Frontend (Next.js)
+# Phase IV - Tasks T031, T033, T034
+#
+# Features:
+# - 2 replicas for high availability
+# - RollingUpdate strategy for zero-downtime deployments
+# - Resource limits for cluster stability
+# - Security context (runAsNonRoot)
+# - ConfigMap for environment variables
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-deployment
+  labels:
+    app: todo-app
+    component: frontend
+    phase: "4"
+spec:
+  # T031: 2 replicas for high availability
+  replicas: 2
+
+  # T033: RollingUpdate strategy
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+
+  selector:
+    matchLabels:
+      app: todo-app
+      component: frontend
+
+  template:
+    metadata:
+      labels:
+        app: todo-app
+        component: frontend
+    spec:
+      # T034: Security context - run as non-root
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+
+      containers:
+        - name: frontend
+          image: todo-frontend:latest
+          imagePullPolicy: IfNotPresent
+
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+
+          # Environment variables from ConfigMap
+          envFrom:
+            - configMapRef:
+                name: todo-config
+
+          # Resource limits
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+          # T041: Liveness probe - checks if container is running
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          # T042: Readiness probe - checks if container is ready to receive traffic
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            successThreshold: 1
+            failureThreshold: 3
+
+          # T043: Startup probe - gives container time to start up
+          startupProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 30
+
+          # Container security context
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop:
+                - ALL
+
+      # Graceful termination
+      terminationGracePeriodSeconds: 30
+
+      # Restart policy
+      restartPolicy: Always

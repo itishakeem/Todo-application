@@ -153,6 +153,27 @@ As a user, I want task cards to display appropriately on different screen sizes 
 
 ---
 
+### User Story 8 - Authentication Error Handling (Priority: P2)
+
+As a user, I want to see clear, inline error messages when I enter wrong credentials so that I understand what went wrong and can correct my input without confusion.
+
+**Why this priority**: Authentication is the gateway to the application. Clear error feedback when login fails is essential for user experience and prevents user frustration. This is core usability that directly impacts first impressions.
+
+**Independent Test**: Can be tested by entering invalid email/password combinations on the login page and verifying that error messages appear inline (not as browser alerts) within 300ms with clear guidance on what went wrong.
+
+**Acceptance Scenarios**:
+
+1. **Given** I am on the login page, **When** I enter an unregistered email "nonexistent@test.com" and any password, then click "Sign In", **Then** I see a red inline error message "Invalid email or password" displayed below the form inputs within 300ms, the form inputs retain their values, and the submit button re-enables
+2. **Given** I am on the login page, **When** I enter a registered email but wrong password, then click "Sign In", **Then** I see a red inline error message "Invalid email or password" displayed below the form inputs within 300ms (same generic message for security - does not reveal which field is wrong)
+3. **Given** the login page shows an error message, **When** I start typing in either email or password field, **Then** the error message clears immediately (within 100ms) to allow retry without visual clutter
+4. **Given** I am on the login page, **When** I submit with empty email field, **Then** I see inline validation error "Email is required" below the email input, and the form does not submit to the server
+5. **Given** I am on the login page, **When** I submit with empty password field, **Then** I see inline validation error "Password is required" below the password input, and the form does not submit to the server
+6. **Given** I am on the login page, **When** I enter an invalid email format (e.g., "notanemail"), **Then** I see inline validation error "Please enter a valid email address" below the email input on blur or submit
+7. **Given** the login API request fails due to network error, **When** the error occurs, **Then** I see inline error message "Unable to connect. Please check your internet connection and try again." below the form
+8. **Given** I am on the login page on mobile (375px width), **When** an error is displayed, **Then** the error text is minimum 14px font size, red color (#EF4444), centered below the form with 8px top margin, and the form inputs remain visible above the keyboard
+
+---
+
 ### Edge Cases
 
 - **What happens when the user submits the add task form while a previous add request is still in progress?** The "Add Task" button becomes disabled (opacity 0.5, cursor: not-allowed, aria-disabled="true") and shows a spinner icon until the API responds (success or error), preventing duplicate submissions
@@ -167,6 +188,8 @@ As a user, I want task cards to display appropriately on different screen sizes 
 - **How does the UI respond to browser back/forward navigation buttons?** Application uses client-side routing (Next.js App Router). Clicking back button returns to previous route (if any, otherwise browser history). Filter selections do NOT create history entries (clicking back while on "Active" filter does NOT return to "All" - filter state is not in URL). No unexpected page reloads occur.
 - **What happens when a user tries to edit two tasks simultaneously?** When user clicks "Edit" on Task B while Task A is in edit mode, Task A automatically exits edit mode (changes discarded, no save) and Task B enters edit mode. Only one task can be in edit mode at a time.
 - **How are timestamps displayed across different timezones?** All timestamps are stored in UTC in the database and displayed in the user's local timezone using browser's Intl.DateTimeFormat API. Format: "YYYY-MM-DD HH:MM" (24-hour time). Timezone conversion is automatic.
+- **What happens when a user enters wrong credentials multiple times on the login page?** Each failed attempt shows the same inline error message "Invalid email or password". No rate limiting in Phase II (defer to Phase V). The error message clears when the user starts typing again to allow retry. No account lockout in Phase II.
+- **How does the login page handle network errors vs authentication errors?** Network errors (timeout, offline, 500 server error) show "Unable to connect. Please check your internet connection and try again." Authentication errors (401) show "Invalid email or password". Both are displayed as inline red text below the form, not as browser alerts.
 
 ## Requirements *(mandatory)*
 
@@ -192,6 +215,8 @@ As a user, I want task cards to display appropriately on different screen sizes 
 - **FR-018**: System MUST use consistent design tokens: Primary color #0066CC (blue), Success color #10B981 (green), Error color #EF4444 (red), Gray text #6B7280, Background #FFFFFF, Card border #E5E7EB (1px), Border radius 8px, Spacing scale 4/8/12/16/20/24px
 - **FR-019**: System MUST ensure all interactive elements meet minimum touch target size: 44x44px for all buttons, checkboxes (44x44px touch target with 24px visible checkbox), input fields (minimum 44px height), with minimum 8px spacing between adjacent touch targets
 - **FR-020**: System MUST handle empty states: when no tasks exist, display centered message "No tasks yet. Add one to get started!" with icon in the task list area; when filtered view has no matches (e.g., "Active" filter with 0 pending tasks), display "No [active/completed] tasks" centered in task list area
+- **FR-021**: System MUST display authentication errors on login page as inline error messages (not browser alerts): "Invalid email or password" for 401 responses, "Unable to connect. Please check your internet connection and try again." for network errors. Error text MUST be displayed in 14px red font (#EF4444), centered below the form with 8px top margin, and clear automatically when user starts typing
+- **FR-022**: System MUST validate login form inputs inline before submission: empty email shows "Email is required", empty password shows "Password is required", invalid email format shows "Please enter a valid email address". Validation errors appear below the respective input field in 14px red font (#EF4444)
 
 ### UI Component Specifications
 
@@ -208,6 +233,8 @@ As a user, I want task cards to display appropriately on different screen sizes 
 - **Toast Notification Component**: Fixed position top-right (24px from top, 24px from right on desktop; 16px on mobile), width 320px max, background #FFFFFF, border-radius 8px, padding 16px, box-shadow 0 10px 15px rgba(0,0,0,0.1). Success toast: green left border 4px #10B981. Error toast: red left border 4px #EF4444. Slide-in animation from right 300ms ease, auto-dismiss after specified duration (3s success, 5s error) with fade-out 200ms
 
 - **Filter Tabs Component**: Horizontal button group, each tab 44px height, padding 12px 24px, font-size 16px, background transparent, border-bottom 4px transparent, cursor pointer. Active tab: border-bottom 4px #0066CC, color #0066CC, font-weight 600. Inactive tab: color #6B7280, font-weight 400. Hover state: background #F3F4F6
+
+- **Login Error Message Component**: Displayed below the login form, centered, font-size 14px, color #EF4444 (red), margin-top 8px, max-width matches form width. Error message appears with fade-in animation (150ms ease). Clears on input focus (any form field). For field-level validation errors, display directly below the relevant input with 4px top margin.
 
 - **Empty State Component**: Centered flexbox column, icon (64x64px gray), heading (20px bold), message (16px regular gray), total height fills available task list area. Icon uses SVG with #6B7280 fill
 

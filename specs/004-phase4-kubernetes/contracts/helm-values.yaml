@@ -1,0 +1,156 @@
+# Helm Values Contract: Phase IV Kubernetes Deployment
+# This file documents the expected Helm values structure
+# Actual implementation will be in helm/todo-app/values.yaml
+
+# =============================================================================
+# Global Settings
+# =============================================================================
+global:
+  # Kubernetes namespace for all resources
+  namespace: default
+
+  # Container registry (empty string = local/minikube registry)
+  imageRegistry: ""
+
+# =============================================================================
+# Frontend Configuration (Next.js)
+# =============================================================================
+frontend:
+  # Number of pod replicas for high availability
+  # Minimum: 1, Recommended: 2, Maximum (Minikube): 4
+  replicaCount: 2
+
+  image:
+    # Docker image name
+    repository: todo-frontend
+    # Image tag (use specific versions in production)
+    tag: latest
+    # When to pull the image
+    # IfNotPresent: Use local if available (faster for development)
+    # Always: Always pull (ensures latest in production)
+    # Never: Never pull (for local-only images)
+    pullPolicy: IfNotPresent
+
+  resources:
+    # Resource requests (guaranteed allocation)
+    requests:
+      cpu: 100m      # 0.1 CPU cores
+      memory: 128Mi  # 128 MB RAM
+    # Resource limits (maximum allowed)
+    limits:
+      cpu: 500m      # 0.5 CPU cores
+      memory: 512Mi  # 512 MB RAM
+
+  service:
+    # Service type for internal cluster access
+    type: ClusterIP
+    # Port exposed by the service
+    port: 3000
+
+  healthCheck:
+    # Endpoint for health probes
+    path: /
+    # Wait before first health check (allow startup)
+    initialDelaySeconds: 10
+    # Time between health checks
+    periodSeconds: 10
+
+# =============================================================================
+# Backend Configuration (FastAPI)
+# =============================================================================
+backend:
+  # Number of pod replicas
+  replicaCount: 2
+
+  image:
+    repository: todo-backend
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi  # Backend needs more memory for Python
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  service:
+    type: ClusterIP
+    port: 8000
+
+  healthCheck:
+    # FastAPI health endpoint (already exists from Phase II)
+    path: /health
+    # Backend may take longer to start (database connections)
+    initialDelaySeconds: 15
+    periodSeconds: 10
+
+# =============================================================================
+# Ingress Configuration
+# =============================================================================
+ingress:
+  # Enable external access via Ingress
+  enabled: true
+
+  # Ingress controller class (nginx is Minikube default)
+  className: nginx
+
+  # Host and path routing rules
+  hosts:
+    - host: todo.local
+      paths:
+        # Root path serves frontend
+        - path: /
+          pathType: Prefix
+          service: frontend
+        # /api/* routes to backend
+        - path: /api
+          pathType: Prefix
+          service: backend
+
+# =============================================================================
+# Secrets (Sensitive - NEVER commit actual values)
+# =============================================================================
+# Values should be base64 encoded
+# Generate with: echo -n "value" | base64
+secrets:
+  # Neon PostgreSQL connection string
+  # Format: postgresql://user:pass@host:5432/db?sslmode=require
+  databaseUrl: ""  # REQUIRED: Set via --set or values override
+
+  # OpenAI API key for AI chatbot
+  openaiApiKey: ""  # REQUIRED: Set via --set or values override
+
+  # Better Auth secret for session encryption
+  betterAuthSecret: ""  # REQUIRED: Set via --set or values override
+
+# =============================================================================
+# ConfigMap (Non-Sensitive Configuration)
+# =============================================================================
+configMap:
+  # Backend API URL for frontend to use
+  # In Kubernetes, services can be accessed by name
+  apiUrl: "http://backend-service:8000"
+
+  # Application log level
+  logLevel: "info"
+
+  # Node.js environment mode
+  nodeEnv: "production"
+
+# =============================================================================
+# Environment-Specific Overrides
+# =============================================================================
+# These are defined in separate files:
+#
+# values-dev.yaml:
+#   - replicaCount: 1 (save resources)
+#   - logLevel: "debug"
+#   - nodeEnv: "development"
+#
+# values-prod.yaml:
+#   - replicaCount: 3 (higher availability)
+#   - resources.limits increased
+#   - logLevel: "warn"
+#   - nodeEnv: "production"

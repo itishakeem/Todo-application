@@ -14,7 +14,7 @@ description: "Phase II Full-Stack Web Todo Application - Task Breakdown"
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Can run in parallel (different files, no dependencies)
-- **[Story]**: Which user story this task belongs to (US1-US7)
+- **[Story]**: Which user story this task belongs to (US1-US8)
 - Include exact file paths in descriptions
 
 ## Path Conventions
@@ -564,17 +564,68 @@ Then merge and continue with remaining stories.
 
 ---
 
+## Phase 12: User Story 8 - Authentication Error Handling (Priority: P2)
+
+**Purpose**: Display inline error messages for login failures instead of browser alerts
+
+**Goal**: User sees clear, styled inline error messages when entering wrong credentials
+
+**Independent Test**: Enter wrong credentials, verify inline red error message appears (not alert)
+
+### E2E Tests for User Story 8 (Red-Green-Refactor)
+
+> **CRITICAL: Write these tests FIRST, verify they FAIL before implementation**
+
+- [ ] T177 [P] [US8] E2E test: Login with unregistered email shows inline error "Invalid email or password" in frontend/tests/e2e/auth-errors.spec.ts
+- [ ] T178 [P] [US8] E2E test: Login with wrong password shows inline error "Invalid email or password" in frontend/tests/e2e/auth-errors.spec.ts
+- [ ] T179 [P] [US8] E2E test: Error message clears when user starts typing in frontend/tests/e2e/auth-errors.spec.ts
+- [ ] T180 [P] [US8] E2E test: Empty email shows inline validation "Email is required" in frontend/tests/e2e/auth-errors.spec.ts
+- [ ] T181 [P] [US8] E2E test: Empty password shows inline validation "Password is required" in frontend/tests/e2e/auth-errors.spec.ts
+- [ ] T182 [P] [US8] E2E test: Invalid email format shows "Please enter a valid email address" in frontend/tests/e2e/auth-errors.spec.ts
+- [ ] T183 [P] [US8] E2E test: Network error shows "Unable to connect..." message in frontend/tests/e2e/auth-errors.spec.ts
+- [ ] T184 [P] [US8] E2E test: Error message is 14px red (#EF4444), centered below form in frontend/tests/e2e/auth-errors.spec.ts
+
+### Frontend Implementation for User Story 8
+
+- [x] T185 [US8] Create LoginErrorMessage component in frontend/app/login/components/LoginErrorMessage.tsx
+  - Red (#EF4444) 14px text, centered, 8px top margin
+  - Fade-in animation (150ms ease)
+  - Max-width matches form width
+- [x] T186 [US8] Add error state management to login page in frontend/app/login/page.tsx
+  - Replace `alert()` with inline error state
+  - Track error type (validation vs API error)
+- [x] T187 [US8] Implement client-side form validation before API call
+  - Email required check
+  - Password required check
+  - Email format validation (basic regex)
+- [x] T188 [US8] Update handleSubmit to catch API errors and display inline
+  - 401 → "Invalid email or password"
+  - Network error → "Unable to connect. Please check your internet connection and try again."
+- [x] T189 [US8] Add input onChange handler to clear error message
+  - Error clears within 100ms when user starts typing
+- [x] T190 [US8] Add field-level validation error display below inputs
+  - 4px top margin below input
+  - Red (#EF4444) 14px text
+- [x] T191 [US8] Style error states with TailwindCSS
+  - Input border red when field has error
+  - Error text animation (fade-in 150ms)
+
+**Checkpoint**: User Story 8 complete - login page shows inline errors instead of alerts
+
+---
+
 ## Notes
 
-- **Total Tasks**: 176 tasks across 11 phases (7 post-implementation refinements added)
+- **Total Tasks**: 191 tasks across 12 phases
 - **Critical Path**: Phase 1 (Setup) → Phase 2 (Foundational) → Phase 3 (US1 MVP)
 - **Test Strategy**: TDD with Playwright E2E tests (Red-Green-Refactor)
-- **E2E Test Coverage**: 54 scenarios (matches spec.md acceptance criteria exactly)
-- **[P] Markers**: 82 tasks can run in parallel (48% parallelizable)
-- **MVP Scope**: Phase 1 + Phase 2 + Phase 3 = 48 tasks (28% of total)
+- **E2E Test Coverage**: 62 scenarios (54 original + 8 authentication error handling)
+- **[P] Markers**: 90 tasks can run in parallel (47% parallelizable)
+- **MVP Scope**: Phase 1 + Phase 2 + Phase 3 = 48 tasks (25% of total)
 - **Tech Stack**: Next.js 15+, FastAPI, Neon PostgreSQL, Better Auth, TailwindCSS
 - **Design System**: All spacing/colors/animations defined in plan.md design tokens
 - **Accessibility**: WCAG 2.1 Level AA compliance built into all components
 - **Performance**: Core Web Vitals targets enforced in Phase 10
+- **User Stories**: US1-US8 (8 total, including authentication error handling)
 
-**🎯 Recommended Start**: Complete Phases 1-3 for MVP, then iterate with Phases 4-10
+**🎯 Recommended Start**: Complete Phases 1-3 for MVP, then iterate with Phases 4-12

@@ -1,0 +1,32 @@
+# Kubernetes ConfigMap for Todo Application
+# Phase IV - Task T030
+#
+# Non-sensitive configuration values shared across pods.
+# These values can be safely committed to version control.
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: todo-config
+  labels:
+    app: todo-app
+    component: config
+    phase: "4"
+data:
+  # API URL for frontend to reach backend (internal K8s service)
+  NEXT_PUBLIC_API_URL: "http://backend-service:8000"
+
+  # Logging level for application
+  LOG_LEVEL: "info"
+
+  # Node environment for Next.js
+  NODE_ENV: "production"
+
+  # Python environment settings
+  PYTHONUNBUFFERED: "1"
+
+  # Application name (for logging/tracing)
+  APP_NAME: "todo-app"
+
+  # Application version
+  APP_VERSION: "0.1.0"

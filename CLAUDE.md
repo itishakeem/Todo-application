@@ -1,4 +1,4 @@
-# Claude Code Rules
+﻿# Claude Code Rules
 
 This file is generated during init for the selected agent.
 
@@ -208,50 +208,72 @@ Wait for consent; never auto-create ADRs. Group related decisions (stacks, authe
 
 ## Hackathon Todo App Project Structure
 
-This project follows the 5-phase hackathon progression:
+This project follows the 5-phase hackathon progression with phase-organized folders:
 
 ```
 Todo-application/
-├── .claude/
-│   └── agents/                    # Specialized subagent definitions
-│       ├── speckit-architect.md   # SDD workflow management
-│       ├── phase1-console-app.md  # Python console app agent
-│       ├── phase2-fullstack-web.md # Next.js + FastAPI agent
-│       ├── phase3-ai-chatbot.md   # OpenAI Agents + MCP agent
-│       ├── phase4-kubernetes.md   # Docker + Helm + Minikube agent
-│       └── phase5-cloud-deployment.md # Kafka + Dapr + Cloud agent
-├── .specify/
-│   └── memory/
-│       └── constitution.md        # Project principles
-├── specs/
-│   ├── phase1-console-app/        # Phase I specifications
-│   │   ├── spec.md
-│   │   ├── plan.md
-│   │   └── tasks.md
-│   ├── phase2-fullstack-web/      # Phase II specifications
-│   │   ├── spec.md
-│   │   ├── plan.md
-│   │   └── tasks.md
-│   ├── phase3-ai-chatbot/         # Phase III specifications
-│   ├── phase4-kubernetes/         # Phase IV specifications
-│   └── phase5-cloud-deployment/   # Phase V specifications
-├── history/
-│   ├── prompts/                   # Prompt History Records
-│   │   ├── constitution/
-│   │   ├── phase1-console-app/
-│   │   ├── phase2-fullstack-web/
-│   │   ├── phase3-ai-chatbot/
-│   │   ├── phase4-kubernetes/
-│   │   ├── phase5-cloud-deployment/
-│   │   └── general/
-│   └── adr/                       # Architectural Decision Records
-├── src/                           # Phase I: Python source code
-├── frontend/                      # Phase II+: Next.js application
-├── backend/                       # Phase II+: FastAPI application
-├── helm/                          # Phase IV+: Helm charts
-├── k8s/                           # Phase IV+: Kubernetes manifests
-├── docker/                        # Phase IV+: Dockerfiles
-├── .github/workflows/             # Phase V: CI/CD pipelines
+├── phase1-console-app/            # Phase I: Python Console Application
+│   ├── src/                       # Python source code
+│   │   ├── main.py
+│   │   ├── models/
+│   │   ├── storage/
+│   │   └── ui/
+│   ├── tests/                     # Unit & integration tests
+│   ├── pyproject.toml
+│   └── .python-version
+│
+├── phase2-fullstack-web/          # Phase II: Full-Stack Web Application
+│   ├── frontend/                  # Next.js 16+ application
+│   │   ├── app/                   # App router pages
+│   │   ├── components/            # React components
+│   │   ├── lib/                   # Utilities & hooks
+│   │   └── package.json
+│   └── backend/                   # FastAPI application
+│       ├── src/
+│       │   ├── api/               # REST endpoints
+│       │   ├── models/            # Database models
+│       │   ├── services/          # Business logic
+│       │   ├── agent/             # AI Agent (Phase III)
+│       │   └── mcp/               # MCP Server (Phase III)
+│       └── pyproject.toml
+│
+├── phase3-ai-chatbot/             # Phase III: AI-Powered Chatbot
+│   └── README.md                  # Code integrated in Phase II
+│
+├── phase4-kubernetes/             # Phase IV: Kubernetes Containerization
+│   ├── docker/                    # Dockerfiles & compose
+│   │   ├── frontend/Dockerfile
+│   │   ├── backend/Dockerfile
+│   │   └── docker-compose.yml
+│   ├── k8s/                       # Kubernetes manifests
+│   │   ├── *-deployment.yaml
+│   │   ├── *-service.yaml
+│   │   ├── ingress.yaml
+│   │   └── secrets.yaml
+│   └── helm/                      # Helm charts
+│       └── todo-app/
+│
+├── phase5-cloud-deployment/       # Phase V: Cloud-Native Deployment
+│   └── README.md                  # Placeholder for future work
+│
+├── specs/                         # SDD Specifications (all phases)
+│   ├── 001-phase1-console-app/
+│   ├── 002-phase2-fullstack-web/
+│   ├── 003-phase3-ai-chatbot/
+│   ├── 004-phase4-kubernetes/
+│   └── 005-phase5-cloud-deployment/
+│
+├── history/                       # Prompt History Records
+│   └── prompts/
+│
+├── .claude/                       # Agent definitions & commands
+│   ├── agents/
+│   └── commands/
+│
+├── .specify/                      # SpecKit+ templates & scripts
+│   ├── memory/
+│   └── templates/
+│
 ├── CLAUDE.md                      # This file
 └── README.md                      # Project documentation
 ```

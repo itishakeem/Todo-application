@@ -1,0 +1,29 @@
+# Kubernetes Service for Todo Frontend
+# Phase IV - Task T035
+#
+# ClusterIP service exposing port 3000 for internal cluster access.
+# Frontend pods are accessed via this service by the ingress controller.
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+  labels:
+    app: todo-app
+    component: frontend
+    phase: "4"
+spec:
+  # ClusterIP for internal access only (ingress handles external)
+  type: ClusterIP
+
+  # Port configuration
+  ports:
+    - name: http
+      port: 3000
+      targetPort: 3000
+      protocol: TCP
+
+  # Select frontend pods
+  selector:
+    app: todo-app
+    component: frontend

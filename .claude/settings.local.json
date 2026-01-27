@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell -File \".specify/scripts/powershell/check-prerequisites.ps1\" -Json -RequireTasks -IncludeTasks)",
+      "Bash(powershell -Command \"docker images todo-frontend --format ''{{.Repository}}:{{.Tag}} - {{.Size}}''\")"
+    ]
+  }
+}

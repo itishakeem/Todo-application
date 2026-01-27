@@ -220,6 +220,11 @@ backend/
    - **Rationale**: Matches spec exactly (90% inline validation), non-blocking UX
    - **Alternatives Considered**: Global error boundary (too aggressive), inline only (misses API errors), modal alerts (blocking)
 
+11. **Authentication Error Display**
+    - **Decision**: Inline error messages on login page (not browser alerts or toasts)
+    - **Rationale**: Authentication errors need immediate, visible feedback in context. Browser `alert()` is disruptive and non-styled. Inline errors provide better UX by keeping user on the form with clear guidance.
+    - **Alternatives Considered**: Browser alert (poor UX, breaks flow), toast notification (too transient for auth errors, user might miss it), modal dialog (too heavy for simple error)
+
 10. **Responsive Breakpoint Implementation**
     - **Decision**: TailwindCSS default breakpoints customized (sm:768px, lg:1024px)
     - **Rationale**: Matches spec requirements (mobile 320-767px, tablet 768-1023px, desktop 1024px+)
@@ -378,6 +383,13 @@ App (layout.tsx)
 ├── Header
 │   ├── Logo
 │   └── UserMenu (logout button)
+├── LoginPage (/login)
+│   ├── LoginForm
+│   │   ├── Input (email, with validation error)
+│   │   ├── Input (password, with validation error)
+│   │   ├── Button (Sign In)
+│   │   └── ErrorMessage (inline, below form - for API errors)
+│   └── Link (to signup)
 └── Dashboard (protected route)
     ├── TaskForm
     │   ├── Input (title)
@@ -606,7 +618,12 @@ Desktop: 1024px+         (lg: prefix in Tailwind)
 - Signup with valid email/password → success
 - Signup with existing email → 409 error
 - Login with valid credentials → dashboard redirect
-- Login with invalid credentials → 401 error
+- Login with invalid credentials → inline error "Invalid email or password" (not browser alert)
+- Login with unregistered email → inline error "Invalid email or password"
+- Login with empty email → inline validation error "Email is required"
+- Login with empty password → inline validation error "Password is required"
+- Login with invalid email format → inline validation error "Please enter a valid email address"
+- Login error clears when user starts typing → error message disappears
 - Logout → redirect to login
 
 **Test Suite 2: Task CRUD (P1-P3 User Stories)**

@@ -1,0 +1,55 @@
+# Kubernetes Ingress for Todo Application
+# Phase IV - Task T037
+#
+# nginx Ingress controller with path-based routing:
+# - /       -> frontend-service:3000 (Next.js app)
+# - /api/*  -> backend-service:8000 (FastAPI)
+#
+# Prerequisites:
+# - Enable ingress addon: minikube addons enable ingress
+# - Add to hosts: <minikube-ip> todo.local
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: todo-ingress
+  labels:
+    app: todo-app
+    component: ingress
+    phase: "4"
+  annotations:
+    # Use nginx ingress controller
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    # Rewrite /api/* to /* for backend
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    # SSL redirect (disabled for local development)
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    # Proxy settings
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+spec:
+  ingressClassName: nginx
+
+  rules:
+    - host: todo.local
+      http:
+        paths:
+          # Backend API routes - must come first (more specific)
+          - path: /api(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: backend-service
+                port:
+                  number: 8000
+
+          # Frontend routes - catch all
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend-service
+                port:
+                  number: 3000

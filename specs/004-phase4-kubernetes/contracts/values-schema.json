@@ -1,0 +1,339 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://todo-app.hackathon/helm/values-schema.json",
+  "title": "Todo App Helm Values Schema",
+  "description": "JSON Schema for Phase IV Kubernetes Helm chart values",
+  "type": "object",
+  "properties": {
+    "global": {
+      "type": "object",
+      "description": "Global settings applied to all components",
+      "properties": {
+        "namespace": {
+          "type": "string",
+          "default": "default",
+          "description": "Kubernetes namespace for deployment"
+        },
+        "imageRegistry": {
+          "type": "string",
+          "default": "",
+          "description": "Container registry URL (empty for local)"
+        }
+      }
+    },
+    "frontend": {
+      "type": "object",
+      "description": "Next.js frontend configuration",
+      "required": ["replicaCount", "image", "resources", "service"],
+      "properties": {
+        "replicaCount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "default": 2,
+          "description": "Number of frontend pod replicas"
+        },
+        "image": {
+          "type": "object",
+          "required": ["repository", "tag"],
+          "properties": {
+            "repository": {
+              "type": "string",
+              "default": "todo-frontend",
+              "description": "Docker image repository"
+            },
+            "tag": {
+              "type": "string",
+              "default": "latest",
+              "description": "Docker image tag"
+            },
+            "pullPolicy": {
+              "type": "string",
+              "enum": ["Always", "IfNotPresent", "Never"],
+              "default": "IfNotPresent",
+              "description": "Image pull policy"
+            }
+          }
+        },
+        "resources": {
+          "type": "object",
+          "properties": {
+            "requests": {
+              "type": "object",
+              "properties": {
+                "cpu": {
+                  "type": "string",
+                  "pattern": "^[0-9]+m?$",
+                  "default": "100m",
+                  "description": "CPU request (millicores)"
+                },
+                "memory": {
+                  "type": "string",
+                  "pattern": "^[0-9]+(Mi|Gi)$",
+                  "default": "128Mi",
+                  "description": "Memory request"
+                }
+              }
+            },
+            "limits": {
+              "type": "object",
+              "properties": {
+                "cpu": {
+                  "type": "string",
+                  "pattern": "^[0-9]+m?$",
+                  "default": "500m",
+                  "description": "CPU limit (millicores)"
+                },
+                "memory": {
+                  "type": "string",
+                  "pattern": "^[0-9]+(Mi|Gi)$",
+                  "default": "512Mi",
+                  "description": "Memory limit"
+                }
+              }
+            }
+          }
+        },
+        "service": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["ClusterIP", "NodePort", "LoadBalancer"],
+              "default": "ClusterIP",
+              "description": "Kubernetes service type"
+            },
+            "port": {
+              "type": "integer",
+              "default": 3000,
+              "description": "Service port"
+            }
+          }
+        },
+        "healthCheck": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "default": "/",
+              "description": "Health check endpoint path"
+            },
+            "initialDelaySeconds": {
+              "type": "integer",
+              "default": 10,
+              "description": "Initial delay before health checks"
+            },
+            "periodSeconds": {
+              "type": "integer",
+              "default": 10,
+              "description": "Period between health checks"
+            }
+          }
+        }
+      }
+    },
+    "backend": {
+      "type": "object",
+      "description": "FastAPI backend configuration",
+      "required": ["replicaCount", "image", "resources", "service"],
+      "properties": {
+        "replicaCount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "default": 2,
+          "description": "Number of backend pod replicas"
+        },
+        "image": {
+          "type": "object",
+          "required": ["repository", "tag"],
+          "properties": {
+            "repository": {
+              "type": "string",
+              "default": "todo-backend",
+              "description": "Docker image repository"
+            },
+            "tag": {
+              "type": "string",
+              "default": "latest",
+              "description": "Docker image tag"
+            },
+            "pullPolicy": {
+              "type": "string",
+              "enum": ["Always", "IfNotPresent", "Never"],
+              "default": "IfNotPresent",
+              "description": "Image pull policy"
+            }
+          }
+        },
+        "resources": {
+          "type": "object",
+          "properties": {
+            "requests": {
+              "type": "object",
+              "properties": {
+                "cpu": {
+                  "type": "string",
+                  "pattern": "^[0-9]+m?$",
+                  "default": "100m",
+                  "description": "CPU request (millicores)"
+                },
+                "memory": {
+                  "type": "string",
+                  "pattern": "^[0-9]+(Mi|Gi)$",
+                  "default": "256Mi",
+                  "description": "Memory request"
+                }
+              }
+            },
+            "limits": {
+              "type": "object",
+              "properties": {
+                "cpu": {
+                  "type": "string",
+                  "pattern": "^[0-9]+m?$",
+                  "default": "500m",
+                  "description": "CPU limit (millicores)"
+                },
+                "memory": {
+                  "type": "string",
+                  "pattern": "^[0-9]+(Mi|Gi)$",
+                  "default": "512Mi",
+                  "description": "Memory limit"
+                }
+              }
+            }
+          }
+        },
+        "service": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["ClusterIP", "NodePort", "LoadBalancer"],
+              "default": "ClusterIP",
+              "description": "Kubernetes service type"
+            },
+            "port": {
+              "type": "integer",
+              "default": 8000,
+              "description": "Service port"
+            }
+          }
+        },
+        "healthCheck": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "default": "/health",
+              "description": "Health check endpoint path"
+            },
+            "initialDelaySeconds": {
+              "type": "integer",
+              "default": 15,
+              "description": "Initial delay before health checks"
+            },
+            "periodSeconds": {
+              "type": "integer",
+              "default": 10,
+              "description": "Period between health checks"
+            }
+          }
+        }
+      }
+    },
+    "ingress": {
+      "type": "object",
+      "description": "Ingress configuration for external access",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable ingress resource"
+        },
+        "className": {
+          "type": "string",
+          "default": "nginx",
+          "description": "Ingress controller class"
+        },
+        "hosts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "host": {
+                "type": "string",
+                "default": "todo.local",
+                "description": "Hostname for ingress"
+              },
+              "paths": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "description": "URL path"
+                    },
+                    "pathType": {
+                      "type": "string",
+                      "enum": ["Prefix", "Exact", "ImplementationSpecific"],
+                      "default": "Prefix"
+                    },
+                    "service": {
+                      "type": "string",
+                      "enum": ["frontend", "backend"],
+                      "description": "Target service"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "secrets": {
+      "type": "object",
+      "description": "Sensitive configuration (base64 encoded)",
+      "properties": {
+        "databaseUrl": {
+          "type": "string",
+          "description": "Base64 encoded DATABASE_URL"
+        },
+        "openaiApiKey": {
+          "type": "string",
+          "description": "Base64 encoded OPENAI_API_KEY"
+        },
+        "betterAuthSecret": {
+          "type": "string",
+          "description": "Base64 encoded BETTER_AUTH_SECRET"
+        }
+      }
+    },
+    "configMap": {
+      "type": "object",
+      "description": "Non-sensitive configuration",
+      "properties": {
+        "apiUrl": {
+          "type": "string",
+          "default": "http://backend-service:8000",
+          "description": "Backend API URL for frontend"
+        },
+        "logLevel": {
+          "type": "string",
+          "enum": ["debug", "info", "warn", "error"],
+          "default": "info",
+          "description": "Application log level"
+        },
+        "nodeEnv": {
+          "type": "string",
+          "enum": ["development", "production", "test"],
+          "default": "production",
+          "description": "Node.js environment"
+        }
+      }
+    }
+  }
+}

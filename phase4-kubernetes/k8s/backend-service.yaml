@@ -1,0 +1,29 @@
+# Kubernetes Service for Todo Backend
+# Phase IV - Task T036
+#
+# ClusterIP service exposing port 8000 for internal cluster access.
+# Backend pods are accessed via this service by frontend and ingress.
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+  labels:
+    app: todo-app
+    component: backend
+    phase: "4"
+spec:
+  # ClusterIP for internal access only (ingress handles external)
+  type: ClusterIP
+
+  # Port configuration
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 8000
+      protocol: TCP
+
+  # Select backend pods
+  selector:
+    app: todo-app
+    component: backend
