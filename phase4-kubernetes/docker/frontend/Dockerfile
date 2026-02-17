@@ -1,82 +1,71 @@
-# Phase IV Kubernetes - Frontend Dockerfile
-# Multi-stage build for optimized Next.js production image
-# Target: <500MB image size, non-root user
+# =============================================================================
+# Multi-stage Dockerfile for Next.js Frontend
+# Base image: node:20-alpine for minimal size
+# Build context: phase2-fullstack-web/frontend/
+# =============================================================================
 
 # =============================================================================
-# Stage 1: Dependencies (deps)
-# Install ALL dependencies for building (including devDependencies like TypeScript)
+# Stage 1: Dependencies
+# Install ALL dependencies (needed for build stage)
 # =============================================================================
 FROM node:20-alpine AS deps
 
-# Add libc6-compat for Alpine compatibility
-RUN apk add --no-cache libc6-compat
-
 WORKDIR /app
 
-# Copy package files for dependency installation
-COPY package.json package-lock.json* ./
+# Copy package files
+COPY package*.json ./
 
-# Install ALL dependencies (needed for TypeScript build)
-RUN npm ci && npm cache clean --force
+# Install all dependencies (including devDependencies for build)
+RUN npm ci --ignore-scripts
 
 # =============================================================================
 # Stage 2: Builder
-# Build the Next.js application
+# Build the Next.js application with all dependencies
 # =============================================================================
 FROM node:20-alpine AS builder
 
+# Build argument for API URL (defaults to localhost for local dev)
+ARG NEXT_PUBLIC_API_URL=http://localhost:8000
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+
 WORKDIR /app
 
-# Copy all dependencies from deps stage (includes TypeScript for next.config.ts)
+# Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
 
-# Copy source code
+# Copy application source
 COPY . .
 
-# Set environment variables for build
-ENV NEXT_TELEMETRY_DISABLED=1
-ENV NODE_ENV=production
-
-# Build the application (standalone output enabled in next.config.ts)
+# Build Next.js application (creates .next/standalone)
 RUN npm run build
 
 # =============================================================================
-# Stage 3: Runner (Production)
-# Minimal production image with non-root user
+# Stage 3: Runner
+# Create minimal production image with non-root user
 # =============================================================================
 FROM node:20-alpine AS runner
 
 WORKDIR /app
 
-# Set production environment
+# Create system group and user for security
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs
+
+# Set to production environment
 ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
 
-# Create non-root user for security (FR-005)
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-
-# Copy only necessary files from builder
-# Standalone output includes all required dependencies
-COPY --from=builder /app/public ./public
-
-# Set proper ownership before copying standalone files
-RUN mkdir .next
-RUN chown nextjs:nodejs .next
-
-# Copy standalone server and static files
+# Copy standalone build output
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
 # Switch to non-root user
 USER nextjs
 
-# Expose port 3000 (FR-001)
+# Expose port 3000
 EXPOSE 3000
 
-# Set port environment variable
-ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
-
-# Start the server (FR-001)
+# Start the application
 CMD ["node", "server.js"]

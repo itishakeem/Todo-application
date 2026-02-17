@@ -1,44 +1,42 @@
-# Kubernetes Deployment for Todo Frontend (Next.js)
-# Phase IV - Tasks T031, T033, T034
-#
-# Features:
-# - 2 replicas for high availability
-# - RollingUpdate strategy for zero-downtime deployments
-# - Resource limits for cluster stability
-# - Security context (runAsNonRoot)
-# - ConfigMap for environment variables
+# =============================================================================
+# Kubernetes Deployment - Frontend (Next.js)
+# =============================================================================
 
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend-deployment
+  namespace: default
   labels:
-    app: todo-app
+    app: todo-application
     component: frontend
-    phase: "4"
+    tier: presentation
 spec:
-  # T031: 2 replicas for high availability
+  # Number of pod replicas
   replicas: 2
 
-  # T033: RollingUpdate strategy
+  # Rolling update strategy
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxSurge: 25%
-      maxUnavailable: 25%
+      maxSurge: 25%        # Allow 25% more pods during update
+      maxUnavailable: 25%  # Allow 25% unavailable during update
 
+  # Pod selector
   selector:
     matchLabels:
-      app: todo-app
+      app: todo-application
       component: frontend
 
+  # Pod template
   template:
     metadata:
       labels:
-        app: todo-app
+        app: todo-application
         component: frontend
+        tier: presentation
     spec:
-      # T034: Security context - run as non-root
+      # Security: Run containers as non-root
       securityContext:
         runAsNonRoot: true
         runAsUser: 1001
@@ -56,60 +54,93 @@ spec:
               protocol: TCP
 
           # Environment variables from ConfigMap
-          envFrom:
-            - configMapRef:
-                name: todo-config
+          env:
+            - name: NODE_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: todo-config
+                  key: NODE_ENV
 
-          # Resource limits
+            - name: NEXT_PUBLIC_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: todo-config
+                  key: NEXT_PUBLIC_API_URL
+
+          # Resource limits and requests
           resources:
             requests:
-              cpu: 100m
-              memory: 128Mi
+              cpu: "100m"      # 0.1 CPU core
+              memory: "128Mi"  # 128 MiB RAM
             limits:
-              cpu: 500m
-              memory: 512Mi
+              cpu: "500m"      # 0.5 CPU core max
+              memory: "512Mi"  # 512 MiB RAM max
 
-          # T041: Liveness probe - checks if container is running
+          # Liveness probe - restart container if unhealthy
           livenessProbe:
             httpGet:
               path: /
               port: http
-            initialDelaySeconds: 10
-            periodSeconds: 10
-            timeoutSeconds: 5
-            failureThreshold: 3
+            initialDelaySeconds: 10  # Wait 10s before first check
+            periodSeconds: 10        # Check every 10s
+            timeoutSeconds: 5        # Timeout after 5s
+            failureThreshold: 3      # Restart after 3 failures
 
-          # T042: Readiness probe - checks if container is ready to receive traffic
+          # Readiness probe - remove from service if not ready
           readinessProbe:
             httpGet:
               path: /
               port: http
-            initialDelaySeconds: 5
-            periodSeconds: 5
-            timeoutSeconds: 3
-            successThreshold: 1
-            failureThreshold: 3
+            initialDelaySeconds: 5   # Wait 5s before first check
+            periodSeconds: 5         # Check every 5s
+            timeoutSeconds: 3        # Timeout after 3s
+            failureThreshold: 3      # Mark unready after 3 failures
 
-          # T043: Startup probe - gives container time to start up
+          # Startup probe - allow sufficient initialization time
           startupProbe:
             httpGet:
               path: /
               port: http
-            initialDelaySeconds: 5
-            periodSeconds: 5
-            timeoutSeconds: 3
-            failureThreshold: 30
+            initialDelaySeconds: 0   # Start checking immediately
+            periodSeconds: 5         # Check every 5s
+            timeoutSeconds: 3        # Timeout after 3s
+            failureThreshold: 30     # Allow 30 failures (150s total)
 
-          # Container security context
+          # Security context for container
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: false
+            runAsNonRoot: true
+            runAsUser: 1001
             capabilities:
               drop:
                 - ALL
 
-      # Graceful termination
-      terminationGracePeriodSeconds: 30
-
       # Restart policy
       restartPolicy: Always
+
+---
+# =============================================================================
+# Usage Instructions
+# =============================================================================
+#
+# Apply deployment:
+#   kubectl apply -f frontend-deployment.yaml
+#
+# Check status:
+#   kubectl get deployment frontend-deployment
+#   kubectl get pods -l component=frontend
+#
+# View logs:
+#   kubectl logs -l component=frontend --tail=50 -f
+#
+# Scale replicas:
+#   kubectl scale deployment frontend-deployment --replicas=3
+#
+# Update image:
+#   kubectl set image deployment/frontend-deployment frontend=todo-frontend:v2
+#
+# Rollback:
+#   kubectl rollout undo deployment/frontend-deployment
+#
+# =============================================================================

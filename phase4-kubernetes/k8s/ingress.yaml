@@ -1,51 +1,72 @@
-# Kubernetes Ingress for Todo Application
-# Phase IV - Task T037
-#
-# nginx Ingress controller with path-based routing:
-# - /       -> frontend-service:3000 (Next.js app)
-# - /api/*  -> backend-service:8000 (FastAPI)
-#
-# Prerequisites:
-# - Enable ingress addon: minikube addons enable ingress
-# - Add to hosts: <minikube-ip> todo.local
+# =============================================================================
+# Kubernetes Ingress - Todo Application
+# Path-based routing for frontend and backend services
+# =============================================================================
 
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: todo-ingress
+  namespace: default
   labels:
-    app: todo-app
-    component: ingress
-    phase: "4"
+    app: todo-application
   annotations:
-    # Use nginx ingress controller
-    kubernetes.io/ingress.class: nginx
-    nginx.ingress.kubernetes.io/use-regex: "true"
-    # Rewrite /api/* to /* for backend
-    nginx.ingress.kubernetes.io/rewrite-target: /$2
-    # SSL redirect (disabled for local development)
+    # Nginx ingress controller annotations
+    nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
-    # Proxy settings
+
+    # CORS configuration
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, PATCH, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+
+    # Request size limits
     nginx.ingress.kubernetes.io/proxy-body-size: "10m"
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+
+    # Timeout configuration
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "60"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+
 spec:
+  # Ingress class (nginx for Minikube)
   ingressClassName: nginx
 
+  # Routing rules
   rules:
+    # Route for todo.local hostname
     - host: todo.local
       http:
         paths:
-          # Backend API routes - must come first (more specific)
-          - path: /api(/|$)(.*)
-            pathType: ImplementationSpecific
+          # Backend API routes - must come first for specificity
+          - path: /api
+            pathType: Prefix
             backend:
               service:
                 name: backend-service
                 port:
                   number: 8000
 
-          # Frontend routes - catch all
+          # Backend health check
+          - path: /health
+            pathType: Prefix
+            backend:
+              service:
+                name: backend-service
+                port:
+                  number: 8000
+
+          # Backend docs
+          - path: /docs
+            pathType: Prefix
+            backend:
+              service:
+                name: backend-service
+                port:
+                  number: 8000
+
+          # Frontend routes - catch-all, must come last
           - path: /
             pathType: Prefix
             backend:
@@ -53,3 +74,66 @@ spec:
                 name: frontend-service
                 port:
                   number: 3000
+
+---
+# =============================================================================
+# Usage Instructions
+# =============================================================================
+#
+# Prerequisites:
+# 1. Enable nginx ingress controller in Minikube:
+#    minikube addons enable ingress
+#
+# 2. Add todo.local to /etc/hosts (Linux/Mac) or C:\Windows\System32\drivers\etc\hosts (Windows):
+#    <MINIKUBE_IP> todo.local
+#
+#    Get Minikube IP:
+#    minikube ip
+#
+#    Example entry:
+#    192.168.49.2 todo.local
+#
+# Apply ingress:
+#   kubectl apply -f ingress.yaml
+#
+# Check status:
+#   kubectl get ingress todo-ingress
+#   kubectl describe ingress todo-ingress
+#
+# Wait for address assignment:
+#   kubectl get ingress todo-ingress --watch
+#
+# Test routes:
+#   curl http://todo.local/                    # Frontend
+#   curl http://todo.local/api/health          # Backend health check
+#   curl http://todo.local/docs                # Backend API docs
+#
+# View ingress controller logs:
+#   kubectl logs -n ingress-nginx -l app.kubernetes.io/component=controller
+#
+# Debug ingress:
+#   kubectl describe ingress todo-ingress
+#   kubectl get events --sort-by='.lastTimestamp'
+#
+# =============================================================================
+# Path Routing Logic
+# =============================================================================
+#
+# Request Flow:
+#
+# 1. http://todo.local/api/tasks
+#    → backend-service:8000/api/tasks
+#
+# 2. http://todo.local/health
+#    → backend-service:8000/health
+#
+# 3. http://todo.local/docs
+#    → backend-service:8000/docs
+#
+# 4. http://todo.local/
+#    → frontend-service:3000/
+#
+# 5. http://todo.local/dashboard
+#    → frontend-service:3000/dashboard
+#
+# =============================================================================

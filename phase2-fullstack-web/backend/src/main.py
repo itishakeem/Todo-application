@@ -19,7 +19,13 @@ app = FastAPI(
 )
 
 # Configure CORS
-origins = ["http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000", "http://127.0.0.1:3001"]
+origins = [
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:3001",
+    "http://todo.local",
+]
 
 app.add_middleware(
     CORSMiddleware,
@@ -41,12 +47,12 @@ async def on_startup():
     create_db_and_tables()
     # Register MCP tools for Phase III AI Chatbot
     register_tools()
-    print("✓ MCP tools registered successfully")
+    print("MCP tools registered successfully")
 
 
 @app.get("/")
 async def root():
-    """Health check endpoint."""
+    """Root endpoint."""
     return {
         "message": "Todo API - Phase II",
         "version": "0.1.0",
@@ -57,4 +63,10 @@ async def root():
 @app.get("/health")
 async def health():
     """Health check for deployment monitoring."""
+    return {"status": "healthy"}
+
+
+@app.get("/api/health")
+async def api_health():
+    """Health check under /api prefix for Kubernetes ingress."""
     return {"status": "healthy"}

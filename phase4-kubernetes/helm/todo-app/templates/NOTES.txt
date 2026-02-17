@@ -1,0 +1,112 @@
+================================================================================
+Todo Application - Successfully Deployed!
+================================================================================
+
+Release Name: {{ .Release.Name }}
+Namespace: {{ .Values.global.namespace }}
+Chart Version: {{ .Chart.Version }}
+App Version: {{ .Chart.AppVersion }}
+
+================================================================================
+DEPLOYMENT STATUS
+================================================================================
+
+1. Check the deployment status:
+
+   kubectl get deployments -n {{ .Values.global.namespace }} -l app.kubernetes.io/instance={{ .Release.Name }}
+
+2. View running pods:
+
+   kubectl get pods -n {{ .Values.global.namespace }} -l app.kubernetes.io/instance={{ .Release.Name }}
+
+3. Watch pod startup:
+
+   kubectl get pods -n {{ .Values.global.namespace }} -l app.kubernetes.io/instance={{ .Release.Name }} --watch
+
+================================================================================
+ACCESS THE APPLICATION
+================================================================================
+
+{{- if .Values.ingress.enabled }}
+{{- range .Values.ingress.hosts }}
+
+The application is accessible via Ingress:
+
+   Frontend:  http://{{ .host }}/
+   Backend:   http://{{ .host }}/api
+   API Docs:  http://{{ .host }}/docs
+   Health:    http://{{ .host }}/health
+
+{{- if eq .host "todo.local" }}
+
+For local access, add this entry to your hosts file:
+
+   # Linux/Mac: /etc/hosts
+   # Windows: C:\Windows\System32\drivers\etc\hosts
+
+   $(minikube ip) {{ .host }}
+
+{{- end }}
+{{- end }}
+{{- else }}
+
+Access services directly via port-forward:
+
+   Frontend:
+   kubectl port-forward -n {{ .Values.global.namespace }} svc/{{ include "todo-app.fullname" . }}-frontend {{ .Values.frontend.service.port }}:{{ .Values.frontend.service.port }}
+   Open: http://localhost:{{ .Values.frontend.service.port }}
+
+   Backend:
+   kubectl port-forward -n {{ .Values.global.namespace }} svc/{{ include "todo-app.fullname" . }}-backend {{ .Values.backend.service.port }}:{{ .Values.backend.service.port }}
+   Open: http://localhost:{{ .Values.backend.service.port }}/docs
+
+{{- end }}
+
+================================================================================
+USEFUL COMMANDS
+================================================================================
+
+View logs:
+   kubectl logs -n {{ .Values.global.namespace }} -l component=frontend --tail=50 -f
+   kubectl logs -n {{ .Values.global.namespace }} -l component=backend --tail=50 -f
+
+Describe resources:
+   kubectl describe deployment -n {{ .Values.global.namespace }} {{ include "todo-app.fullname" . }}-frontend
+   kubectl describe deployment -n {{ .Values.global.namespace }} {{ include "todo-app.fullname" . }}-backend
+
+Scale deployment:
+   helm upgrade {{ .Release.Name }} ./helm/todo-app --set backend.replicaCount=3
+
+Upgrade release:
+   helm upgrade {{ .Release.Name }} ./helm/todo-app -f values-prod.yaml
+
+Rollback:
+   helm rollback {{ .Release.Name }} 1
+
+Uninstall:
+   helm uninstall {{ .Release.Name }}
+
+================================================================================
+HEALTH CHECKS
+================================================================================
+
+Frontend: {{ .Values.frontend.healthCheck.path }}
+Backend:  {{ .Values.backend.healthCheck.path }}
+
+Test connectivity:
+   helm test {{ .Release.Name }}
+
+================================================================================
+CONFIGURATION
+================================================================================
+
+Replicas:
+   Frontend: {{ .Values.frontend.replicaCount }}
+   Backend:  {{ .Values.backend.replicaCount }}
+
+Environment: {{ .Values.configMap.environment }}
+Log Level:   {{ .Values.configMap.logLevel }}
+
+================================================================================
+For more information, visit the project repository or documentation.
+================================================================================

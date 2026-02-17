@@ -1,0 +1,32 @@
+# =============================================================================
+# Helm Test - Connection Test
+# =============================================================================
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "todo-app.fullname" . }}-test-connection"
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "todo-app.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": hook-succeeded,hook-failed
+spec:
+  restartPolicy: Never
+
+  containers:
+    - name: wget
+      image: busybox:latest
+      command: ['sh', '-c']
+      args:
+        - |
+          echo "Testing frontend connection..."
+          wget --spider -S "http://{{ include "todo-app.fullname" . }}-frontend:{{ .Values.frontend.service.port }}/" 2>&1 | grep "HTTP/" || exit 1
+          echo "Frontend connection: OK"
+
+          echo "Testing backend connection..."
+          wget --spider -S "http://{{ include "todo-app.fullname" . }}-backend:{{ .Values.backend.service.port }}/health" 2>&1 | grep "HTTP/" || exit 1
+          echo "Backend connection: OK"
+
+          echo "All connection tests passed!"

@@ -44,3 +44,10 @@ yarn-debug.log*
 test-results/
 playwright-report/
 nul
+
+# Kubernetes secrets (Phase IV)
+phase4-kubernetes/k8s/secrets.local.yaml
+phase4-kubernetes/k8s/*.secret.yaml
+phase4-kubernetes/.env.k8s
+phase4-kubernetes/helm/todo-app/secrets.yaml
+secrets*.yaml

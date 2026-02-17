@@ -2,9 +2,42 @@
  * API client wrapper with fetch.
  * T023: Create API client wrapper
  * Handles API calls to FastAPI backend with proper error handling.
+ *
+ * Phase IV K8s Enhancement: Auto-detect backend URL for minikube service access
  */
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+/**
+ * Get the API base URL with auto-detection support for Kubernetes deployments
+ * - If NEXT_PUBLIC_API_URL is "auto" or empty, detect from window.location
+ * - Otherwise use the provided URL or default to localhost:8000
+ */
+function getApiUrl(): string {
+  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+
+  // Auto-detection mode for Kubernetes (minikube service access)
+  if (envUrl === 'auto' || envUrl === '' || !envUrl) {
+    // Server-side rendering: use backend service name
+    if (typeof window === 'undefined') {
+      return 'http://backend-service:8000';
+    }
+
+    // Client-side: construct URL based on current host
+    const protocol = window.location.protocol;
+    const hostname = window.location.hostname;
+
+    // If running on localhost (port-forward mode), use localhost:8000
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'http://localhost:8000';
+    }
+
+    // For Minikube NodePort deployment: backend is at same hostname, port 30800
+    return `${protocol}//${hostname}:30800`;
+  }
+
+  return envUrl;
+}
+
+const API_URL = getApiUrl();
 
 export class ApiError extends Error {
   constructor(

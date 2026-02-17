@@ -1,0 +1,175 @@
+# =============================================================================
+# Default Values - Todo Application Helm Chart
+# =============================================================================
+
+# Global configuration
+global:
+  namespace: default
+  imageRegistry: ""
+
+# Frontend (Next.js) configuration
+frontend:
+  replicaCount: 2
+
+  image:
+    repository: todo-frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  service:
+    type: ClusterIP
+    port: 3000
+    targetPort: 3000
+
+  healthCheck:
+    path: /
+    livenessProbe:
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+    readinessProbe:
+      initialDelaySeconds: 5
+      periodSeconds: 5
+      timeoutSeconds: 3
+      failureThreshold: 3
+    startupProbe:
+      initialDelaySeconds: 0
+      periodSeconds: 5
+      timeoutSeconds: 3
+      failureThreshold: 30
+
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1001
+    runAsGroup: 1001
+    fsGroup: 1001
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: false
+
+# Backend (FastAPI) configuration
+backend:
+  replicaCount: 2
+
+  image:
+    repository: todo-backend
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  service:
+    type: ClusterIP
+    port: 8000
+    targetPort: 8000
+
+  healthCheck:
+    path: /health
+    livenessProbe:
+      initialDelaySeconds: 15
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+    readinessProbe:
+      initialDelaySeconds: 10
+      periodSeconds: 5
+      timeoutSeconds: 3
+      failureThreshold: 3
+    startupProbe:
+      initialDelaySeconds: 0
+      periodSeconds: 5
+      timeoutSeconds: 3
+      failureThreshold: 30
+
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1001
+    runAsGroup: 1001
+    fsGroup: 1001
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: false
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, PATCH, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+  hosts:
+    - host: todo.local
+      paths:
+        - path: /api
+          pathType: Prefix
+          service: backend
+        - path: /health
+          pathType: Prefix
+          service: backend
+        - path: /docs
+          pathType: Prefix
+          service: backend
+        - path: /
+          pathType: Prefix
+          service: frontend
+
+# Secrets (provide via --set or separate values file)
+secrets:
+  # Base64 encoded values
+  databaseUrl: ""        # Required: Base64 encoded DATABASE_URL
+  openaiApiKey: ""       # Required: Base64 encoded OPENAI_API_KEY
+  betterAuthSecret: ""   # Required: Base64 encoded BETTER_AUTH_SECRET
+
+# ConfigMap values
+configMap:
+  environment: "production"
+  logLevel: "info"
+  nodeEnv: "production"
+  corsOrigins: "http://todo.local,http://localhost:3000"
+  betterAuthUrl: "http://todo.local/api/auth"
+
+# Deployment strategy
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 25%
+    maxUnavailable: 25%
+
+# =============================================================================
+# Usage Examples
+# =============================================================================
+#
+# Install with secrets:
+#   helm install todo ./helm/todo-app \
+#     --set secrets.databaseUrl=$(echo -n "postgresql://..." | base64) \
+#     --set secrets.openaiApiKey=$(echo -n "sk-..." | base64) \
+#     --set secrets.betterAuthSecret=$(echo -n "secret" | base64)
+#
+# Install with custom replica count:
+#   helm install todo ./helm/todo-app --set backend.replicaCount=3
+#
+# Install with custom image tag:
+#   helm install todo ./helm/todo-app --set frontend.image.tag=v1.2.0
+#
+# =============================================================================

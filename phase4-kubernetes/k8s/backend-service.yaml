@@ -1,29 +1,62 @@
-# Kubernetes Service for Todo Backend
-# Phase IV - Task T036
-#
-# ClusterIP service exposing port 8000 for internal cluster access.
-# Backend pods are accessed via this service by frontend and ingress.
+# =============================================================================
+# Kubernetes Service - Backend
+# Exposes backend pods within the cluster
+# =============================================================================
 
 apiVersion: v1
 kind: Service
 metadata:
   name: backend-service
+  namespace: default
   labels:
-    app: todo-app
+    app: todo-application
     component: backend
-    phase: "4"
 spec:
-  # ClusterIP for internal access only (ingress handles external)
-  type: ClusterIP
+  # Service type: NodePort (accessible from host on Minikube)
+  type: NodePort
 
-  # Port configuration
+  # Selector to match backend pods
+  selector:
+    app: todo-application
+    component: backend
+
+  # Ports configuration
   ports:
     - name: http
-      port: 8000
-      targetPort: 8000
       protocol: TCP
+      port: 8000          # Service port (internal)
+      targetPort: http    # Container port name
+      nodePort: 30081     # External port (30000-32767 range)
+      # Alternative: targetPort: 8000
 
-  # Select backend pods
-  selector:
-    app: todo-app
-    component: backend
+  # Session affinity (optional)
+  sessionAffinity: None
+
+---
+# =============================================================================
+# Usage Instructions
+# =============================================================================
+#
+# Apply service:
+#   kubectl apply -f backend-service.yaml
+#
+# Check status:
+#   kubectl get service backend-service
+#   kubectl describe service backend-service
+#
+# Get service URL (Minikube):
+#   minikube service backend-service --url
+#
+# Test API from within cluster:
+#   kubectl run -it --rm debug --image=alpine --restart=Never -- sh
+#   apk add curl
+#   curl http://backend-service:8000/health
+#
+# View endpoints:
+#   kubectl get endpoints backend-service
+#
+# Port forward for local testing:
+#   kubectl port-forward service/backend-service 8000:8000
+#   curl http://localhost:8000/health
+#
+# =============================================================================

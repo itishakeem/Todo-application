@@ -1,29 +1,57 @@
-# Kubernetes Service for Todo Frontend
-# Phase IV - Task T035
-#
-# ClusterIP service exposing port 3000 for internal cluster access.
-# Frontend pods are accessed via this service by the ingress controller.
+# =============================================================================
+# Kubernetes Service - Frontend
+# Exposes frontend pods within the cluster
+# =============================================================================
 
 apiVersion: v1
 kind: Service
 metadata:
   name: frontend-service
+  namespace: default
   labels:
-    app: todo-app
+    app: todo-application
     component: frontend
-    phase: "4"
 spec:
-  # ClusterIP for internal access only (ingress handles external)
-  type: ClusterIP
+  # Service type: NodePort (accessible from host on Minikube)
+  type: NodePort
 
-  # Port configuration
+  # Selector to match frontend pods
+  selector:
+    app: todo-application
+    component: frontend
+
+  # Ports configuration
   ports:
     - name: http
-      port: 3000
-      targetPort: 3000
       protocol: TCP
+      port: 3000          # Service port (internal)
+      targetPort: http    # Container port name
+      nodePort: 30080     # External port (30000-32767 range)
+      # Alternative: targetPort: 3000
 
-  # Select frontend pods
-  selector:
-    app: todo-app
-    component: frontend
+  # Session affinity (optional)
+  sessionAffinity: None
+
+---
+# =============================================================================
+# Usage Instructions
+# =============================================================================
+#
+# Apply service:
+#   kubectl apply -f frontend-service.yaml
+#
+# Check status:
+#   kubectl get service frontend-service
+#   kubectl describe service frontend-service
+#
+# Get service URL (Minikube):
+#   minikube service frontend-service --url
+#
+# Test connectivity from within cluster:
+#   kubectl run -it --rm debug --image=alpine --restart=Never -- sh
+#   wget -qO- http://frontend-service:3000
+#
+# View endpoints:
+#   kubectl get endpoints frontend-service
+#
+# =============================================================================

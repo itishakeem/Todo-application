@@ -1,0 +1,50 @@
+# =============================================================================
+# Production Environment Overrides
+# =============================================================================
+
+# Higher replicas for production availability
+frontend:
+  replicaCount: 3
+
+backend:
+  replicaCount: 3
+
+# Production-specific ConfigMap values
+configMap:
+  environment: "production"
+  logLevel: "warn"
+  nodeEnv: "production"
+  corsOrigins: "https://todo.example.com"
+  betterAuthUrl: "https://todo.example.com/api/auth"
+
+# Production ingress configuration
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - host: todo.example.com
+      paths:
+        - path: /api
+          pathType: Prefix
+          service: backend
+        - path: /health
+          pathType: Prefix
+          service: backend
+        - path: /docs
+          pathType: Prefix
+          service: backend
+        - path: /
+          pathType: Prefix
+          service: frontend
+
+# =============================================================================
+# Usage
+# =============================================================================
+#
+# Install with production values:
+#   helm install todo ./helm/todo-app -f values-prod.yaml \
+#     --set secrets.databaseUrl=$(echo -n "postgresql://..." | base64) \
+#     --set secrets.openaiApiKey=$(echo -n "sk-..." | base64) \
+#     --set secrets.betterAuthSecret=$(echo -n "secret" | base64)
+#
+# =============================================================================

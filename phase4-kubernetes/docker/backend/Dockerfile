@@ -1,6 +1,8 @@
-# Phase IV Kubernetes - Backend Dockerfile
-# Multi-stage build for optimized FastAPI production image
-# Target: <300MB image size, non-root user
+# =============================================================================
+# Multi-stage Dockerfile for FastAPI Backend
+# Base image: python:3.13-slim for minimal size
+# Build context: phase2-fullstack-web/backend/
+# =============================================================================
 
 # =============================================================================
 # Stage 1: Builder
@@ -10,54 +12,48 @@ FROM python:3.13-slim AS builder
 
 WORKDIR /app
 
-# Install build dependencies for psycopg2-binary and other packages
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Install system dependencies needed for building Python packages
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
     gcc \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Upgrade pip and install wheel for faster installs
-RUN pip install --no-cache-dir --upgrade pip wheel
+# Upgrade pip
+RUN pip install --no-cache-dir --upgrade pip
 
-# Copy pyproject.toml for dependency installation
-COPY pyproject.toml ./
+# Copy requirements file
+COPY requirements.txt .
 
-# Install dependencies with optimizations:
-# --no-compile: skip .pyc generation (saves space)
-# --no-cache-dir: don't cache downloaded packages
-RUN pip install --no-cache-dir --no-compile . \
-    && pip cache purge \
-    && find /usr/local/lib/python3.13/site-packages -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true \
-    && find /usr/local/lib/python3.13/site-packages -type d -name "tests" -exec rm -rf {} + 2>/dev/null || true \
-    && find /usr/local/lib/python3.13/site-packages -type d -name "test" -exec rm -rf {} + 2>/dev/null || true \
-    && find /usr/local/lib/python3.13/site-packages -name "*.pyo" -delete 2>/dev/null || true \
-    && find /usr/local/lib/python3.13/site-packages -name "*.pyc" -delete 2>/dev/null || true
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
 # =============================================================================
-# Stage 2: Runner (Production)
-# Minimal production image with non-root user
+# Stage 2: Runner
+# Create minimal production image with non-root user
 # =============================================================================
 FROM python:3.13-slim AS runner
 
 WORKDIR /app
 
-# Install runtime dependencies only (libpq for psycopg2)
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Install runtime dependencies only
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
     libpq5 \
     && rm -rf /var/lib/apt/lists/*
 
-# Create non-root user for security (FR-005)
-RUN groupadd --system --gid 1001 appgroup \
-    && useradd --system --uid 1001 --gid appgroup appuser
+# Create system group and user for security
+RUN addgroup --system --gid 1001 appgroup && \
+    adduser --system --uid 1001 --gid 1001 appuser
 
 # Copy installed packages from builder
 COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 
-# Copy application source code
-COPY src ./src
+# Copy application source
+COPY . .
 
-# Set ownership
+# Set ownership to non-root user
 RUN chown -R appuser:appgroup /app
 
 # Switch to non-root user
@@ -66,14 +62,9 @@ USER appuser
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONOPTIMIZE=2
 
-# Expose port 8000 (FR-002)
+# Expose port 8000
 EXPOSE 8000
 
-# Health check endpoint
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
-
-# Start uvicorn server (FR-002)
+# Start the application with uvicorn
 CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]

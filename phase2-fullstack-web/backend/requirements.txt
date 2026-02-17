@@ -15,5 +15,10 @@ passlib[bcrypt]==1.7.4
 python-dotenv==1.0.1
 
 # Validation
-pydantic[email]==2.10.6
+pydantic[email]>=2.11.0
 email-validator==2.2.0
+
+# Phase III: AI Agent & MCP
+mcp>=1.26.0
+openai-agents>=0.8.4
+google-generativeai>=0.8.3

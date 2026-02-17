@@ -1,32 +1,66 @@
-# Kubernetes ConfigMap for Todo Application
-# Phase IV - Task T030
-#
-# Non-sensitive configuration values shared across pods.
-# These values can be safely committed to version control.
+# =============================================================================
+# Kubernetes ConfigMap - Todo Application
+# Non-sensitive configuration data
+# =============================================================================
 
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: todo-config
+  namespace: default
   labels:
-    app: todo-app
-    component: config
-    phase: "4"
+    app: todo-application
+    component: configuration
 data:
-  # API URL for frontend to reach backend (internal K8s service)
+  # Frontend API URL
+  # Points to the backend service within the cluster
   NEXT_PUBLIC_API_URL: "http://backend-service:8000"
 
-  # Logging level for application
+  # Logging level
+  # Options: debug, info, warning, error
   LOG_LEVEL: "info"
 
-  # Node environment for Next.js
+  # Node environment
+  # Options: development, production
   NODE_ENV: "production"
 
-  # Python environment settings
-  PYTHONUNBUFFERED: "1"
+  # Backend environment
+  ENVIRONMENT: "production"
 
-  # Application name (for logging/tracing)
-  APP_NAME: "todo-app"
+  # CORS origins (comma-separated)
+  # For production, set specific frontend URL
+  CORS_ORIGINS: "http://frontend-service:3000,http://todo.local"
 
-  # Application version
-  APP_VERSION: "0.1.0"
+  # Better Auth URL
+  # External URL for authentication callbacks
+  BETTER_AUTH_URL: "http://todo.local/api/auth"
+
+---
+# =============================================================================
+# Usage Instructions
+# =============================================================================
+#
+# Apply to cluster:
+#   kubectl apply -f configmap.yaml
+#
+# Verify:
+#   kubectl get configmap todo-config
+#   kubectl describe configmap todo-config
+#
+# To reference these values in deployments:
+#
+#   env:
+#     - name: NEXT_PUBLIC_API_URL
+#       valueFrom:
+#         configMapKeyRef:
+#           name: todo-config
+#           key: NEXT_PUBLIC_API_URL
+#
+# Or mount as volume:
+#
+#   volumes:
+#     - name: config
+#       configMap:
+#         name: todo-config
+#
+# =============================================================================

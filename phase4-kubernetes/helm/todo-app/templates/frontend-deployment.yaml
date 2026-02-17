@@ -1,0 +1,104 @@
+# =============================================================================
+# Frontend Deployment Template - Todo Application
+# =============================================================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "todo-app.fullname" . }}-frontend
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "todo-app.frontend.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.frontend.replicaCount }}
+
+  strategy:
+    type: {{ .Values.strategy.type }}
+    {{- if eq .Values.strategy.type "RollingUpdate" }}
+    rollingUpdate:
+      maxSurge: {{ .Values.strategy.rollingUpdate.maxSurge }}
+      maxUnavailable: {{ .Values.strategy.rollingUpdate.maxUnavailable }}
+    {{- end }}
+
+  selector:
+    matchLabels:
+      {{- include "todo-app.frontend.selectorLabels" . | nindent 6 }}
+
+  template:
+    metadata:
+      labels:
+        {{- include "todo-app.frontend.labels" . | nindent 8 }}
+    spec:
+      securityContext:
+        runAsNonRoot: {{ .Values.frontend.securityContext.runAsNonRoot }}
+        runAsUser: {{ .Values.frontend.securityContext.runAsUser }}
+        runAsGroup: {{ .Values.frontend.securityContext.runAsGroup }}
+        fsGroup: {{ .Values.frontend.securityContext.fsGroup }}
+
+      containers:
+        - name: frontend
+          image: "{{ .Values.global.imageRegistry }}{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}"
+          imagePullPolicy: {{ .Values.frontend.image.pullPolicy }}
+
+          ports:
+            - name: http
+              containerPort: {{ .Values.frontend.service.targetPort }}
+              protocol: TCP
+
+          env:
+            # From ConfigMap
+            - name: NODE_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "todo-app.fullname" . }}-config
+                  key: NODE_ENV
+
+            - name: NEXT_PUBLIC_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "todo-app.fullname" . }}-config
+                  key: NEXT_PUBLIC_API_URL
+
+          resources:
+            {{- toYaml .Values.frontend.resources | nindent 12 }}
+
+          # Liveness probe
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.frontend.healthCheck.path }}
+              port: http
+            initialDelaySeconds: {{ .Values.frontend.healthCheck.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.frontend.healthCheck.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.frontend.healthCheck.livenessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.frontend.healthCheck.livenessProbe.failureThreshold }}
+
+          # Readiness probe
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.frontend.healthCheck.path }}
+              port: http
+            initialDelaySeconds: {{ .Values.frontend.healthCheck.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.frontend.healthCheck.readinessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.frontend.healthCheck.readinessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.frontend.healthCheck.readinessProbe.failureThreshold }}
+
+          # Startup probe
+          startupProbe:
+            httpGet:
+              path: {{ .Values.frontend.healthCheck.path }}
+              port: http
+            initialDelaySeconds: {{ .Values.frontend.healthCheck.startupProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.frontend.healthCheck.startupProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.frontend.healthCheck.startupProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.frontend.healthCheck.startupProbe.failureThreshold }}
+
+          securityContext:
+            allowPrivilegeEscalation: {{ .Values.frontend.securityContext.allowPrivilegeEscalation }}
+            readOnlyRootFilesystem: {{ .Values.frontend.securityContext.readOnlyRootFilesystem }}
+            runAsNonRoot: {{ .Values.frontend.securityContext.runAsNonRoot }}
+            runAsUser: {{ .Values.frontend.securityContext.runAsUser }}
+            capabilities:
+              drop:
+                - ALL
+
+      restartPolicy: Always

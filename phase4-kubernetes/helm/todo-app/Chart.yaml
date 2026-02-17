@@ -1,0 +1,48 @@
+# =============================================================================
+# Helm Chart Metadata - Todo Application
+# =============================================================================
+
+apiVersion: v2
+name: todo-app
+description: AI-Powered Todo Application - Phase IV Kubernetes Deployment
+type: application
+version: 1.0.0
+appVersion: "0.1.0"
+
+keywords:
+  - todo
+  - fastapi
+  - nextjs
+  - kubernetes
+  - ai-chatbot
+
+maintainers:
+  - name: Hackathon Team
+    email: team@hackathon.dev
+
+# Dependencies (none for now)
+dependencies: []
+
+# =============================================================================
+# Usage Instructions
+# =============================================================================
+#
+# Install chart:
+#   helm install todo ./helm/todo-app
+#
+# Install with custom values:
+#   helm install todo ./helm/todo-app -f values-dev.yaml
+#
+# Upgrade chart:
+#   helm upgrade todo ./helm/todo-app
+#
+# Uninstall:
+#   helm uninstall todo
+#
+# Lint chart:
+#   helm lint ./helm/todo-app
+#
+# Dry-run:
+#   helm install todo ./helm/todo-app --dry-run --debug
+#
+# =============================================================================
